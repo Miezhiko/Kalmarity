@@ -13,6 +13,7 @@ testing things, bot.json
   "botToken": "YOUR_TOKEN_HERE",
   "connectionString": "database.sqlite",
   "commandPrefix": "!",
+  "kafka" : "localhost:9092",
   "eyesEmoji": {
     "name": "👀"
   }

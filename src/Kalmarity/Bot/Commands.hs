@@ -2,22 +2,24 @@ module Kalmarity.Bot.Commands
   ( registerBotCommands
   ) where
 
-import           Kalmarity.Common
+--import           Kalmarity.Common
 
+import           Kalmarity.Bot.Commands.Help
+import           Kalmarity.Bot.Commands.Homaridae
+import           Kalmarity.Bot.Commands.Utils
 import           Kalmarity.Bot.Database
--- import           Kalmarity.Bot.Utils
 
 import           Calamity
 import           Calamity.Commands
-import           Calamity.Commands.Context (FullContext)
-import           CalamityCommands          (ConstructContext, ParsePrefix)
+import           Calamity.Commands.Context        (FullContext)
+import           CalamityCommands                 (ConstructContext, ParsePrefix)
 
 import           Control.Monad
 
-import qualified Polysemy                  as P
+import qualified Polysemy                         as P
 -- import qualified Polysemy.AtomicState      as P
-import qualified Polysemy.Fail             as P
-import qualified Polysemy.Time             as P
+import qualified Polysemy.Fail                    as P
+import qualified Polysemy.Time                    as P
 
 -- | Register all the bot commands
 registerBotCommands ∷
@@ -33,4 +35,8 @@ registerBotCommands ∷
     ] r
   ) => P.Sem r ()
 registerBotCommands = void $ addCommands $ do
-  void helpCommand
+  admin <- isAdmin
+  void customHelpCommand
+  void $ requires [admin] adminHelpCommand
+
+  registerHomaridaeCommand

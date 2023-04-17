@@ -33,6 +33,7 @@ data Config
       { botToken         :: Text
       , commandPrefix    :: Text
       , connectionString :: Text
+      , kafka            :: Text
       , eyesEmoji        :: RawEmoji
       }
   deriving (Eq, Generic, Show)

@@ -2,21 +2,18 @@ module Main
   ( main
   ) where
 
+import           Kalmarity.Bot
 import           Kalmarity.Common
+import           Kalmarity.Homaridae
 
-import           Kalmarity.Bot.Commands
-import           Kalmarity.Bot.Config
-import           Kalmarity.Bot.Database
-import           Kalmarity.Bot.Handlers
-import           Kalmarity.Bot.Utils
-
-import           Calamity
+import           Calamity                               hiding (wait)
 import           Calamity.Cache.InMemory
 import           Calamity.Commands                      hiding (path)
 import           Calamity.Commands.Context
 import           Calamity.Gateway
 import           Calamity.Metrics.Noop
 import           Calamity.Types.Model.Presence.Activity as Activity
+import           Control.Concurrent.Async               (async, wait)
 
 import           Control.Monad
 
@@ -88,7 +85,11 @@ main = do
     else if "json" `isSuffixOf` path
     then Aeson.eitherDecodeFileStrict path >>= either die pure
     else die "error: unrecoognized file extension (must be either json or yaml)"
-  runBotWith cfg
+  runKafkaConsumerAsync <- async $ runKafkaConsumer (cfg ^. #kafka)
+  runBotWithAsync       <- async $ runBotWith cfg
+
+  wait runKafkaConsumerAsync
+  wait runBotWithAsync
   where
     ifM mb x y = do
       b <- mb
