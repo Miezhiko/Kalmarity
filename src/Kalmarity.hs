@@ -1,155 +1,98 @@
-{-# OPTIONS_GHC -fplugin=Polysemy.Plugin #-}
-
-{-# LANGUAGE
-    ApplicativeDo
-  , BlockArguments
-  , DataKinds
-  , FlexibleContexts
-  , FlexibleInstances
-  , GADTs
-  , MultiParamTypeClasses
-  , OverloadedLabels
-  , OverloadedStrings
-  , PolyKinds
-  , ScopedTypeVariables
-  , TemplateHaskell
-  , TypeApplications
-  , UndecidableInstances
-  , UnicodeSyntax
-  #-}
-
 module Main
   ( main
   ) where
 
-import           Types
+import           Kalmarity.Common
+
+import           Kalmarity.Bot.Commands
+import           Kalmarity.Bot.Config
+import           Kalmarity.Bot.Database
+import           Kalmarity.Bot.Handlers
+import           Kalmarity.Bot.Utils
 
 import           Calamity
 import           Calamity.Cache.InMemory
-import           Calamity.Commands
-import           Calamity.Commands.Context (useFullContext)
-import qualified Calamity.Interactions     as I
+import           Calamity.Commands                      hiding (path)
+import           Calamity.Commands.Context
+import           Calamity.Gateway
 import           Calamity.Metrics.Noop
+import           Calamity.Types.Model.Presence.Activity as Activity
 
-import           Control.Concurrent
 import           Control.Monad
 
-import qualified Data.Text                 as T
+import qualified Data.Aeson                             as Aeson
+import           Data.Flags
+import           Data.List
+-- import qualified Data.Map                               as M
+-- import qualified Data.Sequence                          as Seq
+import qualified Data.Yaml                              as Yaml
 
+-- import qualified Database.Persist.Sql                   as DB
+
+-- import qualified Df1
 import qualified Di
-import qualified DiPolysemy                as DiP
+-- import qualified Di.Core
+import qualified DiPolysemy                             as DiP
 
 import           Optics
+import           Options.Generic
 
-import qualified Polysemy                  as P
-import qualified Polysemy.Async            as P
-import qualified Polysemy.State            as P
+import qualified Polysemy                               as P
+-- import qualified Polysemy.AtomicState                   as P
+import qualified Polysemy.Reader                        as P
+import qualified Polysemy.Time                          as P
 
-import           System.Environment        (getEnv)
+import           System.Directory
+import           System.Exit
 
-import           TextShow
+-- | Run the bot with a given configuration.
+runBotWith ∷ Config -> IO ()
+runBotWith cfg = Di.new $ \di ->
+  void
+  ∘ P.runFinal
+  ∘ P.embedToFinal @IO
+  ∘ DiP.runDiToIO di
+  ∘ runCacheInMemory
+  ∘ runMetricsNoop
+  ∘ runPersistWith (cfg ^. #connectionString)
+  ∘ useConstantPrefix (cfg ^. #commandPrefix)
+  ∘ useFullContext
+  -- . runReqInIO
+  ∘ P.runReader cfg
+  ∘ P.interpretTimeGhc
+  -- . P.atomicStateToIO (MessagePointMessages Map.empty)
+  -- . P.atomicStateToIO Unlocked
+  ∘ runBotIO'
+    (BotToken (cfg ^. #botToken))
+    (defaultIntents .+. intentGuildMembers .+. intentGuildPresences)
+    (Just (StatusUpdateData Nothing [botActivity] Online False))
+  ∘ handleFailByLogging $ do
+    -- db $ DB.runMigration migrateAll
+    registerBotCommands
+    registerEventHandlers
 
+-- | Run the bot in the `IO` monad, reading the configuration
+-- from a `bot.json` file.
 main ∷ IO ()
 main = do
-  tokenH <- T.pack <$> getEnv "BOT_TOKEN"
-  Di.new $ \di ->
-    void ∘ P.runFinal ∘ P.embedToFinal ∘ DiP.runDiToIO di
-      ∘ runCacheInMemory
-      ∘ runMetricsNoop
-      ∘ useConstantPrefix "!"
-      ∘ useFullContext
-      $ runBotIO (BotToken tokenH) defaultIntents $ do
-        addCommands $ do
+  opts <- unwrapRecord @_ @CLIOptions "Kalmarity bot..."
+  path <- case opts ^. #config of
+    Just path -> pure path
+    Nothing -> do
+      ifM (doesFileExist "bot.json") ("bot.json" <$ putStrLn "using bot.json...") $
+        ifM (doesFileExist "bot.yaml") ("bot.yaml" <$ putStrLn "using bot.yaml...") $
+          die "error: cannot find configuration file"
+  cfg <-
+    if "yaml" `isSuffixOf` path
+    then Yaml.decodeFileThrow path
+    else if "json" `isSuffixOf` path
+    then Aeson.eitherDecodeFileStrict path >>= either die pure
+    else die "error: unrecoognized file extension (must be either json or yaml)"
+  runBotWith cfg
+  where
+    ifM mb x y = do
+      b <- mb
+      if b then x else y
 
-          -- just some examples
-          command @'[User] "utest" \cTX u -> do
-            void ∘ tell @T.Text cTX $ "got user: " <> showt u
-          command @'[Named "u" User, Named "u1" User] "utest2" \cTX u u1 -> do
-            void ∘ tell @T.Text cTX $ "got user: " <> showt u <> "\nand: " <> showt u1
-          command @'[T.Text, Snowflake User] "test" \_ctx something aUser -> do
-            DiP.info $ "something = " <> showt something <> ", aUser = " <> showt aUser
-          group "testgroup" $ do
-            void $ command @'[[T.Text]] "test" \cTX l -> do
-              void ∘ tell @T.Text cTX $ "you sent: " <> showt l
-            group "say" do
-              command @'[KleenePlusConcat T.Text] "this" \cTX msgH -> do
-                void $ tell @T.Text cTX msgH
-          command @'[] "explode" \_ctx -> do
-            Just _ <- pure Nothing
-            DiP.debug @T.Text "unreachable!"
-          command @'[] "bye" \cTX -> do
-            void $ tell @T.Text cTX "bye!"
-            stopBot
-
-          -- views!
-          command @'[] "components" \cTX -> do
-            let viewH opts = do
-                  ~(add, done) <- I.row do
-                    add <- I.button ButtonPrimary "add"
-                    done <- I.button ButtonPrimary "done"
-                    pure (add, done)
-                  s <- I.select opts
-                  pure (add, done, s)
-            let initialState = Nephropidae 1 Nothing
-            s <- P.evalState initialState $
-              I.runView (viewH ["0"]) (tell cTX) \(add, done, s) -> do
-                when add do
-                  n <- P.gets (^. #numOptions)
-                  let n' = n + 1
-                  P.modify' (#numOptions .~ n')
-                  let opts = map (T.pack . show) [0 .. n]
-                  I.replaceView (viewH opts) (void . I.edit)
-
-                when done do
-                  finalSelected <- P.gets (^. #selected)
-                  I.endView finalSelected
-                  I.deleteInitialMsg
-                  void ∘ I.respond $ case finalSelected of
-                    Just x  -> "Thanks: " <> x
-                    Nothing -> "Oopsie"
-
-                case s of
-                  Just s' -> do
-                    P.modify' (#selected ?~ s')
-                    void I.deferComponent
-                  Nothing -> pure ()
-            P.embed $ print s
-
-          -- more views!
-          command @'[] "cresponses" \cTX -> do
-            let viewH = I.row do
-                   a <- I.button ButtonPrimary "defer"
-                   b <- I.button ButtonPrimary "deferEph"
-                   c <- I.button ButtonPrimary "deferComp"
-                   d <- I.button ButtonPrimary "modal"
-                   pure (a, b, c, d)
-
-                modalView = do
-                  a <- I.textInput TextInputShort "a"
-                  b <- I.textInput TextInputParagraph "b"
-                  pure (a, b)
-
-            I.runView viewH (tell cTX) $ \(a, b, c, d) -> do
-              when a do
-                void I.defer
-                P.embed $ threadDelay 1000000
-                void $ I.followUp @T.Text "lol"
-
-              when b do
-                void I.deferEphemeral
-                P.embed $ threadDelay 1000000
-                void $ I.followUpEphemeral @T.Text "lol"
-
-              when c do
-                void I.deferComponent
-                P.embed $ threadDelay 1000000
-                void $ I.followUp @T.Text "lol"
-
-              when d do
-                void ∘ P.async $ do
-                  I.runView modalView (void . I.pushModal "lol") $ \(a', b') -> do
-                    P.embed $ print (a', b')
-                    void $ I.respond ("Thanks: " <> a' <> " " <> b')
-                    I.endView ()
-
-              pure ()
+botActivity ∷ Activity
+botActivity = Activity.activity "Squids?" Game

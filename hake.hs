@@ -3,19 +3,25 @@
   , UnicodeSyntax
   #-}
 
-import Hake
+import           Hake
+
+import           Control.Exception (onException)
 
 main ∷ IO ()
 main = hake $ do
   "clean | clean the project" ∫
     cabal ["clean"] >> removeDirIfExists buildPath
+                    >> cleanCabalLocal
 
   kalmarityExecutable ♯ do
-    cabal ["install", "--only-dependencies", "--overwrite-policy=always"]
-    cabal ["configure"]
-    cabal ["build"]
-    getCabalBuildPath appName >>=
-      \p -> copyFile p kalmarityExecutable
+    onException
+      (do
+        cabal ["install", "--only-dependencies", "--overwrite-policy=always"]
+        cabal ["configure"]
+        cabal ["build"]
+        getCabalBuildPath appName >>=
+          \p -> copyFile p kalmarityExecutable)
+      cleanCabalLocal
     cleanCabalLocal
 
   "install | install to system" ◉ [kalmarityExecutable] ∰
