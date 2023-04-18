@@ -35,6 +35,7 @@ data Config
       , connectionString :: Text
       , kafkaAddress     :: Text
       , eyesEmoji        :: RawEmoji
+      , pointAssignEmoji :: RawEmoji
       , allowedGuilds    :: Maybe [Snowflake Guild]
       }
   deriving (Eq, Generic, Show)

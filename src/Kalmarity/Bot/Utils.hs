@@ -1,7 +1,8 @@
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 module Kalmarity.Bot.Utils
-  ( allVals
+  ( module Exported
+  , allVals
   , debug
   , handleFailByLogging
   , info
@@ -10,8 +11,9 @@ module Kalmarity.Bot.Utils
   , tellt
   , tellt_
   , whenJust
-  , (.:)
   ) where
+
+import           Kalmarity.Common as Exported
 
 import           Calamity
 
@@ -52,9 +54,6 @@ whenJust = flip $ maybe (pure ())
 
 invoke_ ∷ _ => a -> P.Sem r ()
 invoke_ = void . invoke
-
-(.:) ∷ (b -> c) -> (a1 -> a2 -> b) -> a1 -> a2 -> c
-(.:) = (.) . (.)
 
 allVals ∷ (Enum a, Bounded a) => [a]
 allVals = [minBound..maxBound]

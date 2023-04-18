@@ -3,7 +3,8 @@ module Main
   ) where
 
 import           Kalmarity.Bot
-import           Kalmarity.Common
+import           Kalmarity.Bot.Handlers.Points
+import           Kalmarity.Bot.Schema
 import           Kalmarity.Homaridae
 
 import           Calamity                               hiding (wait)
@@ -20,22 +21,19 @@ import           Control.Monad
 import qualified Data.Aeson                             as Aeson
 import           Data.Flags
 import           Data.List
--- import qualified Data.Map                               as M
--- import qualified Data.Sequence                          as Seq
+import qualified Data.Map                               as Map
 import qualified Data.Yaml                              as Yaml
 
--- import qualified Database.Persist.Sql                   as DB
+import qualified Database.Persist.Sql                   as DB
 
--- import qualified Df1
 import qualified Di
--- import qualified Di.Core
 import qualified DiPolysemy                             as DiP
 
 import           Optics
 import           Options.Generic
 
 import qualified Polysemy                               as P
--- import qualified Polysemy.AtomicState                   as P
+import qualified Polysemy.AtomicState                   as P
 import qualified Polysemy.Reader                        as P
 import qualified Polysemy.Time                          as P
 
@@ -54,17 +52,15 @@ runBotWith cfg = Di.new $ \di ->
   ∘ runPersistWith (cfg ^. #connectionString)
   ∘ useConstantPrefix (cfg ^. #commandPrefix)
   ∘ useFullContext
-  -- . runReqInIO
   ∘ P.runReader cfg
   ∘ P.interpretTimeGhc
-  -- . P.atomicStateToIO (MessagePointMessages Map.empty)
-  -- . P.atomicStateToIO Unlocked
+  ∘ P.atomicStateToIO (MessagePointMessages Map.empty)
   ∘ runBotIO'
     (BotToken (cfg ^. #botToken))
     (defaultIntents .+. intentGuildMembers .+. intentGuildPresences)
     (Just (StatusUpdateData Nothing [botActivity] Online False))
   ∘ handleFailByLogging $ do
-    -- db $ DB.runMigration migrateAll
+    db $ DB.runMigration migrateAll
     registerBotCommands
     registerEventHandlers
 

@@ -15,7 +15,10 @@ testing things, bot.json
   "commandPrefix": "!",
   "kafkaAddress" : "localhost:9092",
   "eyesEmoji": {
-    "name": "👀"
+    "name": "🦑"
+  },
+  "pointAssignEmoji": {
+    "name": "🦞"
   }
 }
 ```

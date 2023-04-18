@@ -7,6 +7,7 @@ import           Kalmarity.Common
 import           Kalmarity.Bot.Config
 import           Kalmarity.Bot.Database
 import           Kalmarity.Bot.Handlers.GuildCreate
+import           Kalmarity.Bot.Handlers.Points
 import           Kalmarity.Bot.Utils
 
 import           Calamity
@@ -18,7 +19,7 @@ import           Control.Monad
 import           Optics
 
 import qualified Polysemy                              as P
--- import qualified Polysemy.AtomicState      as P
+import qualified Polysemy.AtomicState      as P
 import qualified Polysemy.Fail                         as P
 import qualified Polysemy.Reader                       as P
 import qualified Polysemy.Time                         as P
@@ -32,9 +33,8 @@ registerEventHandlers ∷
       [ Persistable
       , P.Fail
       , P.Reader Config
-      --, P.AtomicState MessagePointMessages
+      , P.AtomicState MessagePointMessages
       , P.GhcTime
-      --, P.AtomicState LockdownState
       ]
       r
   ) =>
@@ -42,12 +42,13 @@ registerEventHandlers ∷
 registerEventHandlers = do
   registerCommandResponseHandler
   registerGuildCreateHandler
+  registerPointGiveHandler
 
 registerCommandResponseHandler ∷
   ( BotC r
   , P.Members
       '[ P.Fail
-       --, P.AtomicState MessagePointMessages
+       , P.AtomicState MessagePointMessages
        , P.Reader Config
        ]
       r
