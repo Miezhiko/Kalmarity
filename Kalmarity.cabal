@@ -22,7 +22,8 @@ Executable kalmarity
     Kalmarity.Bot.Handlers,
     Kalmarity.Bot.Commands.Utils,
     Kalmarity.Bot.Commands.Help,
-    Kalmarity.Bot.Commands.Homaridae
+    Kalmarity.Bot.Commands.Homaridae,
+    Kalmarity.Bot.Handlers.GuildCreate
   Hs-Source-Dirs: src
   default-extensions:
     DataKinds

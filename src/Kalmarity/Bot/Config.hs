@@ -35,6 +35,7 @@ data Config
       , connectionString :: Text
       , kafkaAddress     :: Text
       , eyesEmoji        :: RawEmoji
+      , allowedGuilds    :: Maybe [Snowflake Guild]
       }
   deriving (Eq, Generic, Show)
   deriving anyclass (FromJSON, ToJSON)

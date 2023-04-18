@@ -4,23 +4,24 @@ module Kalmarity.Bot.Handlers
 
 import           Kalmarity.Common
 
-import           Kalmarity.Bot.Utils
 import           Kalmarity.Bot.Config
 import           Kalmarity.Bot.Database
+import           Kalmarity.Bot.Handlers.GuildCreate
+import           Kalmarity.Bot.Utils
 
 import           Calamity
-import           Calamity.Commands         as C
-import           Calamity.Commands.Context (FullContext)
+import           Calamity.Commands                     as C
+import           Calamity.Commands.Context             (FullContext)
 
 import           Control.Monad
 
 import           Optics
 
-import qualified Polysemy                  as P
+import qualified Polysemy                              as P
 -- import qualified Polysemy.AtomicState      as P
-import qualified Polysemy.Fail             as P
-import qualified Polysemy.Reader           as P
-import qualified Polysemy.Time             as P
+import qualified Polysemy.Fail                         as P
+import qualified Polysemy.Reader                       as P
+import qualified Polysemy.Time                         as P
 
 import           TextShow
 
@@ -38,8 +39,9 @@ registerEventHandlers ∷
       r
   ) =>
   P.Sem r ()
-registerEventHandlers =
+registerEventHandlers = do
   registerCommandResponseHandler
+  registerGuildCreateHandler
 
 registerCommandResponseHandler ∷
   ( BotC r
@@ -56,9 +58,9 @@ registerCommandResponseHandler = do
     react @( 'CustomEvt (CtxCommandError FullContext)) $ \(CtxCommandError ctx e) -> do
       info $ "Command failed with reason: " <> showt e
       case e of
-        ParseError n r -> void . tellt ctx $ "Failed to parse parameter: `" <> n <> "`, with reason: ```\n" <> r <> "```"
-        CheckError n r -> void . tellt ctx $ "Failed to pass a check: `" <> n <> "`, with reason: ```\n" <> r <> "```"
-        InvokeError n r -> void . tellt ctx $ "Failed to invoke command `" <> n <> "`, with reason: ```\n" <> r <> "```"
+        ParseError n r  -> void ∘ tellt ctx $ "Failed to parse parameter: `" <> n <> "`, with reason: ```\n" <> r <> "```"
+        CheckError n r  -> void ∘ tellt ctx $ "Failed to pass a check: `"    <> n <> "`, with reason: ```\n" <> r <> "```"
+        InvokeError n r -> void ∘ tellt ctx $ "Failed to invoke command `"   <> n <> "`, with reason: ```\n" <> r <> "```"
       void ∘ invoke $ CreateReaction ctx ctx (UnicodeEmoji "❌")
 
   void $

@@ -13,8 +13,8 @@ import           Calamity.Commands.Context
 import           Calamity.Gateway
 import           Calamity.Metrics.Noop
 import           Calamity.Types.Model.Presence.Activity as Activity
-import           Control.Concurrent.Async               (async, wait)
 
+import           Control.Concurrent.Async               (async, wait)
 import           Control.Monad
 
 import qualified Data.Aeson                             as Aeson
