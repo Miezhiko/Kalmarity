@@ -2,25 +2,23 @@ module Kalmarity.Homaridae.Producer
   ( produceKafkaMessage
   ) where
 
-import           Control.Exception     (bracket)
-import           Control.Monad         (forM_)
+import           Kalmarity.Homaridae.Kafka
 
-import           Data.ByteString       (ByteString)
-import           Data.ByteString.Char8 (pack)
-import           Data.Text             (Text)
+import           Control.Exception         (bracket)
+import           Control.Monad             (forM_)
+
+import           Data.ByteString           (ByteString)
+import           Data.ByteString.Char8     (pack)
 
 import           Kafka.Producer
 
 -- Global producer properties
+-- TODO: pass kafka address
 producerProps ∷ ProducerProperties
 producerProps = brokersList ["localhost:9092"]
              <> sendTimeout (Timeout 10000)
              <> setCallback (deliveryCallback print)
              <> logLevel KafkaLogDebug
-
--- Topic to send messages to
-targetTopic ∷ TopicName
-targetTopic = "Kalmarity"
 
 mkMessage ∷ Maybe ByteString -> Maybe ByteString -> ProducerRecord
 mkMessage k v = ProducerRecord

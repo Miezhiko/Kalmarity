@@ -9,23 +9,25 @@ module Kalmarity.Homaridae.Consumer
   , runKafkaConsumer
   ) where
 
-import           Control.Concurrent.Async
-import           Control.Exception        (SomeException, bracket, catch)
+import           Kalmarity.Homaridae.Kafka
 
+import           Control.Concurrent.Async
+import           Control.Exception         (SomeException, bracket, catch)
+   
 import           Data.Text
 
 import           Kafka.Consumer
 
 -- Global consumer properties
-consumerProps ∷ ConsumerProperties
-consumerProps = brokersList ["localhost:9092"]
-             <> groupId "kalmarity_group"
-             <> noAutoCommit
-             <> logLevel KafkaLogInfo
+consumerProps ∷ Text -> ConsumerProperties
+consumerProps addr = brokersList [BrokerAddress addr]
+                  <> groupId "kalmarity_group"
+                  <> noAutoCommit
+                  <> logLevel KafkaLogInfo
 
 -- Subscription to topics
 consumerSub ∷ Subscription
-consumerSub = topics ["Kalmarity"]
+consumerSub = topics [targetTopic]
            <> offsetReset Earliest
 
 processKafkaMessages ∷ KafkaConsumer -> IO ()
@@ -61,11 +63,11 @@ runConsumerSubscription kafkaConsumer = do
   pure $ Right ()
 
 runKafkaConsumer ∷ Text -> IO ()
-runKafkaConsumer _kafkaAddress = do
+runKafkaConsumer kafkaAddress = do
   res <- bracket mkConsumer clConsumer runHandler
   print res
   where
-    mkConsumer = newConsumer consumerProps consumerSub
+    mkConsumer = newConsumer (consumerProps kafkaAddress) consumerSub
     clConsumer (Left err) = return (Left err)
     clConsumer (Right kc) = maybe (Right ()) Left <$> closeConsumer kc
     runHandler (Left err) = return (Left err)

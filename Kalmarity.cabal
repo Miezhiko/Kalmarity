@@ -11,6 +11,7 @@ Executable kalmarity
   Other-Modules:
     Kalmarity.Common,
     Kalmarity.Homaridae,
+    Kalmarity.Homaridae.Kafka,
     Kalmarity.Homaridae.Consumer,
     Kalmarity.Homaridae.Producer,
     Kalmarity.Bot,
