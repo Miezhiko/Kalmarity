@@ -5,24 +5,20 @@
 
 import           Hake
 
-import           Control.Exception (onException)
-
 main ∷ IO ()
 main = hake $ do
   "clean | clean the project" ∫
     cabal ["clean"] >> removeDirIfExists buildPath
                     >> cleanCabalLocal
 
-  kalmarityExecutable ♯ do
-    onException
-      (do
-        cabal ["install", "--only-dependencies", "--overwrite-policy=always"]
-        cabal ["configure"]
-        cabal ["build"]
-        getCabalBuildPath appName >>=
-          \p -> copyFile p kalmarityExecutable)
-      cleanCabalLocal
-    cleanCabalLocal
+  kalmarityExecutable ♯
+    let build = do
+          cabal ["install", "--only-dependencies", "--overwrite-policy=always"]
+          cabal ["configure"]
+          cabal ["build"]
+          getCabalBuildPath appName >>=
+            \p -> copyFile p kalmarityExecutable
+    in build `finally` cleanCabalLocal
 
   "install | install to system" ◉ [kalmarityExecutable] ∰
     cabal ["install", "--overwrite-policy=always"]

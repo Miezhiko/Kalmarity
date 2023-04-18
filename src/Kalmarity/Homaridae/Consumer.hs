@@ -26,9 +26,15 @@ consumerSub = topics ["Kalmarity"]
 
 loopKafka ∷ KafkaConsumer -> IO ()
 loopKafka kafkaConsumer = do
-  result <- pollMessage kafkaConsumer (Timeout 1000)
+  result <- pollMessage kafkaConsumer (Timeout 2000)
   case result of
-    Left err -> putStrLn $ "Error polling message: " ++ show err
+    Left err ->
+      case err of
+        KafkaResponseError rerr ->
+          case rerr of
+            RdKafkaRespErrTimedOut -> pure ()
+            _ -> putStrLn $ "Polling response error: " ++ show err
+        _ -> putStrLn $ "Error polling message: " ++ show err
     Right msg -> do
       putStrLn $ "Received message: " ++ show msg
       _ <- commitAllOffsets OffsetCommit kafkaConsumer
