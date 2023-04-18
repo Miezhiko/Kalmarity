@@ -3,10 +3,14 @@
   #-}
 
 module Kalmarity.Homaridae.Consumer
-  ( runKafkaConsumer
+  ( consumerProps
+  , consumerSub
+  , processKafkaMessages
+  , runKafkaConsumer
   ) where
 
-import           Control.Exception (SomeException, bracket, catch)
+import           Control.Concurrent.Async
+import           Control.Exception        (SomeException, bracket, catch)
 
 import           Data.Text
 
@@ -24,8 +28,8 @@ consumerSub ∷ Subscription
 consumerSub = topics ["Kalmarity"]
            <> offsetReset Earliest
 
-loopKafka ∷ KafkaConsumer -> IO ()
-loopKafka kafkaConsumer = do
+processKafkaMessages ∷ KafkaConsumer -> IO ()
+processKafkaMessages kafkaConsumer = do
   result <- pollMessage kafkaConsumer (Timeout 2000)
   case result of
     Left err ->
@@ -33,18 +37,27 @@ loopKafka kafkaConsumer = do
         KafkaResponseError rerr ->
           case rerr of
             RdKafkaRespErrTimedOut -> pure ()
-            _ -> putStrLn $ "Polling response error: " ++ show err
+            _                      -> putStrLn $ "Polling response error: " ++ show err
         _ -> putStrLn $ "Error polling message: " ++ show err
     Right msg -> do
       putStrLn $ "Received message: " ++ show msg
       _ <- commitAllOffsets OffsetCommit kafkaConsumer
       putStrLn "Offset committed"
-  loopKafka kafkaConsumer
+  processKafkaMessages kafkaConsumer
 
+-- run two workers
 runConsumerSubscription ∷ KafkaConsumer -> IO (Either KafkaError ())
 runConsumerSubscription kafkaConsumer = do
-  catch (loopKafka kafkaConsumer)
-    (\(e :: SomeException) -> putStrLn $ "Consumer loop exception: " ++ show e)
+  workerTask1 <- async $
+    catch (processKafkaMessages kafkaConsumer)
+      (\(e :: SomeException) -> putStrLn $ "Consumer loop exception: " ++ show e)
+  workerTask2 <- async $
+    catch (processKafkaMessages kafkaConsumer)
+      (\(e :: SomeException) -> putStrLn $ "Consumer loop exception: " ++ show e)
+
+  (_, result) <- waitAnyCancel [workerTask1, workerTask2]
+  print result
+
   pure $ Right ()
 
 runKafkaConsumer ∷ Text -> IO ()
