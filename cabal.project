@@ -2,12 +2,12 @@ packages: .
 
 source-repository-package
   type: git
-  location: https://github.com/simmsb/calamity.git
-  tag: master
+  location: https://github.com/Masha/calamity.git
+  tag: mawa
   subdir: calamity
 
 source-repository-package
   type: git
-  location: https://github.com/simmsb/calamity.git
-  tag: master
+  location: https://github.com/Masha/calamity.git
+  tag: mawa
   subdir: calamity-commands

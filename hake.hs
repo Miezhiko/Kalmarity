@@ -8,8 +8,8 @@ import           Hake
 main ∷ IO ()
 main = hake $ do
   "clean | clean the project" ∫
-    cabal ["clean"] >> removeDirIfExists buildPath
-                    >> cleanCabalLocal
+    cabal ["clean"] `finally` removeDirIfExists buildPath
+                           >> cleanCabalLocal
 
   kalmarityExecutable ♯
     let build = do
