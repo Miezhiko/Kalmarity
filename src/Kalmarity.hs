@@ -85,7 +85,7 @@ main = do
     else if "json" `isSuffixOf` path
     then Aeson.eitherDecodeFileStrict path >>= either die pure
     else die "error: unrecoognized file extension (must be either json or yaml)"
-  runKafkaConsumerAsync <- async $ runKafkaConsumer (cfg ^. #kafka)
+  runKafkaConsumerAsync <- async $ runKafkaConsumer (cfg ^. #kafkaAddress)
   runBotWithAsync       <- async $ runBotWith cfg
 
   wait runKafkaConsumerAsync

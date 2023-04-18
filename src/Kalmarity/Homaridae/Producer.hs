@@ -9,16 +9,16 @@ import           Control.Monad             (forM_)
 
 import           Data.ByteString           (ByteString)
 import           Data.ByteString.Char8     (pack)
+import           Data.Text                 (Text)
 
 import           Kafka.Producer
 
 -- Global producer properties
--- TODO: pass kafka address
-producerProps ∷ ProducerProperties
-producerProps = brokersList ["localhost:9092"]
-             <> sendTimeout (Timeout 10000)
-             <> setCallback (deliveryCallback print)
-             <> logLevel KafkaLogDebug
+producerProps ∷ Text -> ProducerProperties
+producerProps addr = brokersList [BrokerAddress addr]
+                  <> sendTimeout (Timeout 10000)
+                  <> setCallback (deliveryCallback print)
+                  <> logLevel KafkaLogDebug
 
 mkMessage ∷ Maybe ByteString -> Maybe ByteString -> ProducerRecord
 mkMessage k v = ProducerRecord
@@ -35,11 +35,11 @@ sendMessage msg prod = do
   forM_ err1 print
   pure $ Right ()
 
-produceKafkaMessage ∷ String -> IO ()
-produceKafkaMessage msg =
+produceKafkaMessage ∷ Text -> String -> IO ()
+produceKafkaMessage kafkaAddress msg =
     bracket mkProducer clProducer runHandler >>= print
     where
-      mkProducer = newProducer producerProps
+      mkProducer = newProducer $ producerProps kafkaAddress
       clProducer (Left _)     = return ()
       clProducer (Right prod) = closeProducer prod
       runHandler (Left err)   = return $ Left err

@@ -7,6 +7,7 @@ module Kalmarity.Bot.Commands
 import           Kalmarity.Bot.Commands.Help
 import           Kalmarity.Bot.Commands.Homaridae
 import           Kalmarity.Bot.Commands.Utils
+import           Kalmarity.Bot.Config
 import           Kalmarity.Bot.Database
 
 import           Calamity
@@ -19,6 +20,7 @@ import           Control.Monad
 import qualified Polysemy                         as P
 -- import qualified Polysemy.AtomicState      as P
 import qualified Polysemy.Fail                    as P
+import qualified Polysemy.Reader                  as P
 import qualified Polysemy.Time                    as P
 
 -- | Register all the bot commands
@@ -29,6 +31,7 @@ registerBotCommands ∷
     , Persistable
     , P.Fail
     , P.GhcTime
+    , P.Reader Config
     , ConstructContext (Message, User, Maybe Member) FullContext IO ()
     -- , P.AtomicState LockdownState
     -- , Req

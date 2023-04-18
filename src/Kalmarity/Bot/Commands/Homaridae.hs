@@ -4,6 +4,7 @@ module Kalmarity.Bot.Commands.Homaridae
 
 import           Kalmarity.Homaridae
 
+import           Kalmarity.Bot.Config
 import           Kalmarity.Bot.Database
 import           Kalmarity.Bot.Utils
 
@@ -20,12 +21,13 @@ import           Data.Default
 import           Optics
 
 import qualified Polysemy                  as P
+import qualified Polysemy.Reader           as P
 
 registerHomaridaeCommand ∷
   ( BotC r
   , P.Members
    '[ Persistable
-    --, Embed IO ?
+    , P.Reader Config
     ] r
   , MonadIO (P.Sem r)  -- Add MonadIO constraint
   ) => P.Sem (DSLState FullContext r) ()
@@ -34,7 +36,8 @@ registerHomaridaeCommand = void
     $ commandA @'[] "homaridae" ["lb"]
     $ \ctx -> do
       Just _gld <- pure (ctx ^. #guild)
-      liftIO $ produceKafkaMessage "produced message"
+      kafkaAddress <- P.asks @Config $ view #kafkaAddress
+      liftIO $ produceKafkaMessage kafkaAddress "produced message"
       tell_ @Embed ctx $ def
           & #title ?~ "Homaridae"
           & #description ?~ "woof"
