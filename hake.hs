@@ -8,20 +8,16 @@ import           Hake
 main ∷ IO ()
 main = hake $ do
   "clean | clean the project" ∫
-    cabal ["clean"] `finally` removeDirIfExists buildPath
-                           >> cleanCabalLocal
+    cabal ["clean"] ?> removeDirIfExists buildPath
+                    >> cleanCabalLocal
 
-  kalmarityExecutable ♯
-    let build = do
-          cabal ["install", "--only-dependencies", "--overwrite-policy=always"]
-          cabal ["configure"]
-          cabal ["build"]
-          getCabalBuildPath appName >>=
-            \p -> copyFile p kalmarityExecutable
-    in build `finally` cleanCabalLocal
+  kalmarityExecutable ♯ buildKalmarity ?> cleanCabalLocal
 
   "install | install to system" ◉ [kalmarityExecutable] ∰
     cabal ["install", "--overwrite-policy=always"]
+
+  "run | run Kalmarity" ◉ [ kalmarityExecutable ] ∰
+    raw kalmarityExecutable =<< getHakeArgs
 
  where
   appName ∷ String
@@ -35,3 +31,11 @@ main = hake $ do
     {- HLINT ignore "Redundant multi-way if" -}
     if | os ∈ ["win32", "mingw32", "cygwin32"] -> buildPath </> appName ++ "exe"
        | otherwise                             -> buildPath </> appName
+
+  buildKalmarity :: IO ()
+  buildKalmarity = do
+    cabal ["install", "--only-dependencies", "--overwrite-policy=always"]
+    cabal ["configure"]
+    cabal ["build"]
+    getCabalBuildPath appName >>=
+      \p -> copyFile p kalmarityExecutable
