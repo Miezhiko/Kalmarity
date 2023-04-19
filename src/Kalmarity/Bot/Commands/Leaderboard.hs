@@ -31,9 +31,9 @@ import           TextShow
 
 -- | Format a point value to a phrase with proper grammer.
 showPoints ∷ Int -> Text
-showPoints 0 = "no points"
-showPoints 1 = "1 point"
-showPoints n = showt n <> " points"
+showPoints 0 = "no lobsters"
+showPoints 1 = "1 lobster"
+showPoints n = showt n <> " lobsters"
 
 registerLeaderboardCommand ∷
   ( BotC r
@@ -42,8 +42,8 @@ registerLeaderboardCommand ∷
     ] r
   ) => P.Sem (DSLState FullContext r) ()
 registerLeaderboardCommand = void
-    $ help (const "Shows the top points leadearboard.")
-    $ commandA @'[] "leaderboard" ["top"]
+    $ help (const "Shows the top lobsters leadearboard.")
+    $ commandA @'[] "leaderboard" ["top", "lobsters"]
     $ \ctx -> do
     Just gld <- pure (ctx ^. #guild)
     messagePointsRaw <- db $ selectList [MessagePointGuild ==. getID gld] [Asc MessagePointAssignedTo]
@@ -61,7 +61,10 @@ registerLeaderboardCommand = void
       Just usr <- upgrade u
       pure (usr ^. #username, p)
 
-    let txt = T.unlines [showt i <> ". " <> nm <> ": " <> showPoints p | (i, (nm, p)) <- zip [(1 :: Int)..] points]
+    let txt = T.unlines [showt i <> ". "
+                                 <> nm
+                                 <> ": "
+                                 <> showPoints p | (i, (nm, p)) <- zip [(1 :: Int)..] points]
     if null points
       then tellt_ ctx "No one has any points yet!"
       else tell_ @Embed ctx $ def

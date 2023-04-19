@@ -66,6 +66,8 @@ registerCommandResponseHandler = do
 
   void $
     react @( 'CustomEvt (CommandInvoked FullContext)) $ \(CommandInvoked ctx) -> do
-      info $ "Command invoked by " <> ctx ^. #user % #username <> ":\n" <> ctx ^. #message % #content
+      info $ "Command invoked by " <> ctx ^. #user % #username
+                                   <> ":\n"
+                                   <> ctx ^. #message % #content
       emoj <- P.asks @Config $ view #eyesEmoji
       void ∘ invoke $ CreateReaction ctx ctx emoj

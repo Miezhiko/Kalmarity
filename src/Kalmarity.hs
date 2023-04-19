@@ -3,8 +3,6 @@ module Main
   ) where
 
 import           Kalmarity.Bot
-import           Kalmarity.Bot.Handlers.Points
-import           Kalmarity.Bot.Schema
 import           Kalmarity.Homaridae
 
 import           Calamity                               hiding (wait)
