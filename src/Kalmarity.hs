@@ -26,7 +26,9 @@ import qualified Data.Yaml                              as Yaml
 
 import qualified Database.Persist.Sql                   as DB
 
+import qualified Df1
 import qualified Di
+import qualified Di.Core
 import qualified DiPolysemy                             as DiP
 
 import           Optics
@@ -40,6 +42,10 @@ import qualified Polysemy.Time                          as P
 import           System.Directory
 import           System.Exit
 
+filterDi ∷ Di.Core.Di l Di.Path m -> Di.Core.Di l Di.Path m
+filterDi = Di.Core.filter (\_ p _ ->
+            Df1.Push "calamity" `notElem` p)
+
 -- | Run the bot with a given configuration.
 runBotWith ∷ Config -> IO ()
 runBotWith cfg = Di.new $ \di ->
@@ -47,6 +53,7 @@ runBotWith cfg = Di.new $ \di ->
   ∘ P.runFinal
   ∘ P.embedToFinal @IO
   ∘ DiP.runDiToIO di
+  ∘ DiP.local filterDi
   ∘ runCacheInMemory
   ∘ runMetricsNoop
   ∘ runPersistWith (cfg ^. #connectionString)

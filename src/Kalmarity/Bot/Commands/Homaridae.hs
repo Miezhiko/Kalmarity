@@ -33,7 +33,7 @@ registerHomaridaeCommand ∷
   ) => P.Sem (DSLState FullContext r) ()
 registerHomaridaeCommand = void
     $ help (const "Homaridae command.")
-    $ commandA @'[] "homaridae" ["lb"]
+    $ commandA @'[] "homaridae" []
     $ \ctx -> do
       Just _gld <- pure (ctx ^. #guild)
       kafkaAddress <- P.asks @Config $ view #kafkaAddress

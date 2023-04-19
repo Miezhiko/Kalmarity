@@ -43,7 +43,7 @@ registerLeaderboardCommand ∷
   ) => P.Sem (DSLState FullContext r) ()
 registerLeaderboardCommand = void
     $ help (const "Shows the top points leadearboard.")
-    $ commandA @'[] "leaderboard" ["lb"]
+    $ commandA @'[] "leaderboard" ["top"]
     $ \ctx -> do
     Just gld <- pure (ctx ^. #guild)
     messagePointsRaw <- db $ selectList [MessagePointGuild ==. getID gld] [Asc MessagePointAssignedTo]
