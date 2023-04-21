@@ -1,12 +1,7 @@
 [![Haskell CI](https://github.com/Miezhiko/Kalmarity/actions/workflows/haskell.yml/badge.svg)](https://github.com/Miezhiko/Kalmarity/actions/workflows/haskell.yml)
-
-# Kalmarity
-
-this is a lobster, for real
-
-# THIS IS WORK IN PROGRESS
-
-testing things, bot.json
+![grrge](https://user-images.githubusercontent.com/38455533/233700996-2e9837aa-00b9-4cc2-a29c-ce10249a40e1.png)
+bot.json
+--------
 
 ```json
 {
