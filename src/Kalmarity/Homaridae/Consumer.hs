@@ -27,7 +27,7 @@ consumerProps addr = brokersList [BrokerAddress addr]
 
 -- Subscription to topics
 consumerSub ∷ Subscription
-consumerSub = topics [targetTopic]
+consumerSub = topics [consumerTopic]
            <> offsetReset Earliest
 
 processKafkaMessages ∷ KafkaConsumer -> IO ()

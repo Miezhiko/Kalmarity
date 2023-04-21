@@ -29,18 +29,19 @@ mkMessage k v = ProducerRecord
                   , prHeaders   = mempty
                   }
 
-sendMessage ∷ String -> KafkaProducer -> IO (Either KafkaError ())
-sendMessage msg prod = do
-  err1 <- produceMessage prod (mkMessage (Just "MSG") (Just $ pack msg))
+sendMessage ∷ String -> String -> KafkaProducer -> IO (Either KafkaError ())
+sendMessage key msg prod = do
+  err1 <- produceMessage prod (mkMessage (Just $ pack key)
+                                         (Just $ pack msg))
   forM_ err1 print
   pure $ Right ()
 
-produceKafkaMessage ∷ Text -> String -> IO ()
-produceKafkaMessage kafkaAddress msg =
+produceKafkaMessage ∷ Text -> String -> String -> IO ()
+produceKafkaMessage kafkaAddress key msg =
     bracket mkProducer clProducer runHandler >>= print
     where
       mkProducer = newProducer $ producerProps kafkaAddress
       clProducer (Left _)     = return ()
       clProducer (Right prod) = closeProducer prod
       runHandler (Left err)   = return $ Left err
-      runHandler (Right prod) = sendMessage msg prod
+      runHandler (Right prod) = sendMessage key msg prod

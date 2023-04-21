@@ -17,6 +17,7 @@ import           Control.Monad
 import           Control.Monad.IO.Class    (MonadIO, liftIO)
 
 import           Data.Default
+import           Data.Text                 (Text, unpack)
 
 import           Optics
 
@@ -33,11 +34,15 @@ registerHomaridaeCommand ∷
   ) => P.Sem (DSLState FullContext r) ()
 registerHomaridaeCommand = void
     $ help (const "Homaridae command.")
-    $ commandA @'[] "homaridae" []
-    $ \ctx -> do
-      Just _gld <- pure (ctx ^. #guild)
+    $ commandA @'[Text] "homaridae" []
+    $ \ctx txt -> do
+      -- Just _gld <- pure (ctx ^. #guild)
       kafkaAddress <- P.asks @Config $ view #kafkaAddress
-      liftIO $ produceKafkaMessage kafkaAddress "produced message"
+      let msgId  = show (ctx ^. #message % to (getID :: Message -> Snowflake Message))
+          chanId = show (ctx ^. #channel % to (getID :: Channel -> Snowflake Channel))
+          authId = show (ctx ^. #user % to    (getID :: User -> Snowflake User))
+          genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
+      liftIO $ produceKafkaMessage kafkaAddress genKey (unpack txt)
       tell_ @Embed ctx $ def
           & #title ?~ "Homaridae"
           & #description ?~ "woof"
