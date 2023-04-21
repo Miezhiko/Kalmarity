@@ -18,9 +18,10 @@ testing things, bot.json
     "name": "🦑"
   },
   "pointAssignEmoji": {
+
     "name": "🦞"
   }
 }
 ```
 
-![Kalmarity](https://media.discordapp.net/attachments/907871297835528213/1096446601343553647/FthA9rEacAA2Zli.png?width=250&height=525)
+![Kalmarity](https://user-images.githubusercontent.com/38455533/233698500-bd388142-509b-4ab8-bfa5-5b1b6e8e519f.png)
