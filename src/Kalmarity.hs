@@ -4,8 +4,10 @@ module Main
 
 import           Kalmarity.Bot
 import           Kalmarity.Homaridae
+import           Kalmarity.Homaridae.BotEff
 
 import           Calamity                               hiding (wait)
+import           Calamity.Cache.Eff                     (getMessage)
 import           Calamity.Cache.InMemory
 import           Calamity.Commands                      hiding (path)
 import           Calamity.Commands.Context
@@ -13,7 +15,7 @@ import           Calamity.Gateway
 import           Calamity.Metrics.Noop
 import           Calamity.Types.Model.Presence.Activity as Activity
 
-import           Control.Concurrent.Async               (async, wait)
+import           Control.Concurrent
 import           Control.Monad
 
 import qualified Data.Aeson                             as Aeson
@@ -44,6 +46,15 @@ filterDi ∷ Di.Core.Di l Di.Path m -> Di.Core.Di l Di.Path m
 filterDi = Di.Core.filter (\_ p _ ->
             Df1.Push "calamity" `notElem` p)
 
+replyWithSnowflake ∷ (BotC r, HasID Channel Message)
+                  => (Snowflake Message, Text)
+                  -> P.Sem r ()
+replyWithSnowflake (msgId, txt) = do
+  maybeMsgFromId <- getMessage msgId
+  case maybeMsgFromId of
+    Just msgFromId -> void $ reply @Text msgFromId txt
+    Nothing        -> pure ()
+
 -- | Run the bot with a given configuration.
 runBotWith ∷ Config -> IO ()
 runBotWith cfg = Di.new $ \di ->
@@ -52,7 +63,7 @@ runBotWith cfg = Di.new $ \di ->
   ∘ P.embedToFinal @IO
   ∘ DiP.runDiToIO di
   ∘ DiP.local filterDi
-  ∘ runCacheInMemory
+  ∘ runCacheInMemory' 1000 -- remember 1000 messages and ids
   ∘ runMetricsNoop
   ∘ runPersistWith (cfg ^. #connectionString)
   ∘ useConstantPrefix (cfg ^. #commandPrefix)
@@ -65,9 +76,13 @@ runBotWith cfg = Di.new $ \di ->
     (defaultIntents .+. intentGuildMembers .+. intentGuildPresences)
     (Just (StatusUpdateData Nothing [botActivity] Online False))
   ∘ handleFailByLogging $ do
-    db $ DB.runMigration migrateAll
-    registerBotCommands
-    registerEventHandlers
+      replyIO <- bindSemToIO replyWithSnowflake 
+      void $ P.embed
+           $ forkIO
+           $ runKafkaConsumer (cfg ^. #kafkaAddress) replyIO
+      db $ DB.runMigration migrateAll
+      registerBotCommands
+      registerEventHandlers
 
 -- | Run the bot in the `IO` monad, reading the configuration
 -- from a `bot.json` file.
@@ -86,15 +101,10 @@ main = do
     else if "json" `isSuffixOf` path
     then Aeson.eitherDecodeFileStrict path >>= either die pure
     else die "error: unrecoognized file extension (must be either json or yaml)"
-  runKafkaConsumerAsync <- async $ runKafkaConsumer (cfg ^. #kafkaAddress)
-  runBotWithAsync       <- async $ runBotWith cfg
-
-  wait runKafkaConsumerAsync
-  wait runBotWithAsync
-  where
-    ifM mb x y = do
-      b <- mb
-      if b then x else y
+  runBotWith cfg
+ where ifM mb x y = do
+        b <- mb
+        if b then x else y
 
 botActivity ∷ Activity
 botActivity = Activity.activity "Squids?" Game

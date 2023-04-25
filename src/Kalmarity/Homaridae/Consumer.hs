@@ -9,11 +9,18 @@ module Kalmarity.Homaridae.Consumer
   , runKafkaConsumer
   ) where
 
+import           Calamity
+
 import           Kalmarity.Homaridae.Kafka
+import           Kalmarity.Homaridae.SnowFlake
 
 import           Control.Concurrent.Async
-import           Control.Exception         (SomeException, bracket, catch)
+import           Control.Exception             (SomeException, bracket, catch)
    
+import           Control.Monad
+
+import qualified Data.ByteString.Char8         as BSC
+import           Data.Maybe                    (fromMaybe)
 import           Data.Text
 
 import           Kafka.Consumer
@@ -30,8 +37,10 @@ consumerSub ∷ Subscription
 consumerSub = topics [consumerTopic]
            <> offsetReset Earliest
 
-processKafkaMessages ∷ KafkaConsumer -> IO ()
-processKafkaMessages kafkaConsumer = do
+processKafkaMessages ∷ KafkaConsumer
+                    -> ((Snowflake Message, Text) -> IO (Maybe ()))
+                    -> IO ()
+processKafkaMessages kafkaConsumer replyIO = do
   result <- pollMessage kafkaConsumer (Timeout 2000)
   case result of
     Left err ->
@@ -42,19 +51,26 @@ processKafkaMessages kafkaConsumer = do
             _                      -> putStrLn $ "Polling response error: " ++ show err
         _ -> putStrLn $ "Error polling message: " ++ show err
     Right msg -> do
-      putStrLn $ "Received message: " ++ show msg
+      let myKey = BSC.unpack $ fromMaybe BSC.empty (crKey msg)
+          myVal = BSC.unpack $ fromMaybe BSC.empty (crValue msg)
+      case parseSnowflakesTuple myKey of
+        Left err                         -> print err
+        Right (_channelId, _user, messageId) -> do
+          void $ replyIO (messageId, (pack myVal))
       _ <- commitAllOffsets OffsetCommit kafkaConsumer
       putStrLn "Offset committed"
-  processKafkaMessages kafkaConsumer
+  processKafkaMessages kafkaConsumer replyIO
 
 -- run two workers
-runConsumerSubscription ∷ KafkaConsumer -> IO (Either KafkaError ())
-runConsumerSubscription kafkaConsumer = do
+runConsumerSubscription ∷ KafkaConsumer
+                       -> ((Snowflake Message, Text) -> IO (Maybe ()))
+                       -> IO (Either KafkaError ())
+runConsumerSubscription kafkaConsumer replyIO = do
   workerTask1 <- async $
-    catch (processKafkaMessages kafkaConsumer)
+    catch (processKafkaMessages kafkaConsumer replyIO)
       (\(e :: SomeException) -> putStrLn $ "Consumer loop exception: " ++ show e)
   workerTask2 <- async $
-    catch (processKafkaMessages kafkaConsumer)
+    catch (processKafkaMessages kafkaConsumer replyIO)
       (\(e :: SomeException) -> putStrLn $ "Consumer loop exception: " ++ show e)
 
   (_, result) <- waitAnyCancel [workerTask1, workerTask2]
@@ -62,8 +78,10 @@ runConsumerSubscription kafkaConsumer = do
 
   pure $ Right ()
 
-runKafkaConsumer ∷ Text -> IO ()
-runKafkaConsumer kafkaAddress = do
+runKafkaConsumer ∷ Text
+                -> ((Snowflake Message, Text) -> IO (Maybe ()))
+                -> IO ()
+runKafkaConsumer kafkaAddress replyIO = do
   res <- bracket mkConsumer clConsumer runHandler
   print res
   where
@@ -71,4 +89,4 @@ runKafkaConsumer kafkaAddress = do
     clConsumer (Left err) = return (Left err)
     clConsumer (Right kc) = maybe (Right ()) Left <$> closeConsumer kc
     runHandler (Left err) = return (Left err)
-    runHandler (Right kc) = runConsumerSubscription kc
+    runHandler (Right kc) = runConsumerSubscription kc replyIO

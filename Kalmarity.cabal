@@ -1,5 +1,5 @@
 name: Kalmarity
-version: 0.0.2
+version: 0.0.4
 license: AGPL-3
 
 build-type: Simple
@@ -11,6 +11,8 @@ Executable kalmarity
   Other-Modules:
     Kalmarity.Common,
     Kalmarity.Homaridae,
+    Kalmarity.Homaridae.SnowFlake,
+    Kalmarity.Homaridae.BotEff,
     Kalmarity.Homaridae.Kafka,
     Kalmarity.Homaridae.Consumer,
     Kalmarity.Homaridae.Producer,
@@ -20,6 +22,7 @@ Executable kalmarity
     Kalmarity.Bot.Database,
     Kalmarity.Bot.Orphans,
     Kalmarity.Bot.Schema,
+    Kalmarity.Bot.State,
     Kalmarity.Bot.Commands,
     Kalmarity.Bot.Handlers,
     Kalmarity.Bot.Commands.Utils,
@@ -83,5 +86,6 @@ Executable kalmarity
     , data-default          >= 0.7.1.1
     , hw-kafka-client       >= 5.0.0
     , async                 >= 2.2.4
+    , parsec
     , bytestring
     , time
