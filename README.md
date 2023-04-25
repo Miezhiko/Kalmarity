@@ -13,7 +13,6 @@ bot.json
     "name": "🦑"
   },
   "pointAssignEmoji": {
-
     "name": "🦞"
   }
 }
