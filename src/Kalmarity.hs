@@ -46,6 +46,11 @@ filterDi ∷ Di.Core.Di l Di.Path m -> Di.Core.Di l Di.Path m
 filterDi = Di.Core.filter (\_ p _ ->
             Df1.Push "calamity" `notElem` p)
 
+messageWithSnowflake ∷ (BotC r)
+                    => (Snowflake Channel, Text)
+                    -> P.Sem r ()
+messageWithSnowflake (chan, txt) = void $ tell @Text chan txt
+
 replyWithSnowflake ∷ (BotC r, HasID Channel Message)
                   => (Snowflake Message, Text)
                   -> P.Sem r ()
@@ -76,10 +81,12 @@ runBotWith cfg = Di.new $ \di ->
     (defaultIntents .+. intentGuildMembers .+. intentGuildPresences)
     (Just (StatusUpdateData Nothing [botActivity] Online False))
   ∘ handleFailByLogging $ do
-      replyIO <- bindSemToIO replyWithSnowflake 
+      messageIO <- bindSemToIO messageWithSnowflake
+      replyIO   <- bindSemToIO replyWithSnowflake 
       void $ P.embed
            $ forkIO
-           $ runKafkaConsumer (cfg ^. #kafkaAddress) replyIO
+           $ runKafkaConsumer (cfg ^. #kafkaAddress)
+                               messageIO replyIO
       db $ DB.runMigration migrateAll
       registerBotCommands
       registerEventHandlers

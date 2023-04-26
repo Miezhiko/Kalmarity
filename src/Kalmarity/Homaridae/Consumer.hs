@@ -38,9 +38,10 @@ consumerSub = topics [consumerTopic]
            <> offsetReset Earliest
 
 processKafkaMessages ∷ KafkaConsumer
+                    -> ((Snowflake Channel, Text) -> IO (Maybe ()))
                     -> ((Snowflake Message, Text) -> IO (Maybe ()))
                     -> IO ()
-processKafkaMessages kafkaConsumer replyIO = do
+processKafkaMessages kafkaConsumer msgIO replyIO = do
   result <- pollMessage kafkaConsumer (Timeout 2000)
   case result of
     Left err ->
@@ -59,18 +60,19 @@ processKafkaMessages kafkaConsumer replyIO = do
           void $ replyIO (messageId, (pack myVal))
       _ <- commitAllOffsets OffsetCommit kafkaConsumer
       putStrLn "Offset committed"
-  processKafkaMessages kafkaConsumer replyIO
+  processKafkaMessages kafkaConsumer msgIO replyIO
 
 -- run two workers
 runConsumerSubscription ∷ KafkaConsumer
+                       -> ((Snowflake Channel, Text) -> IO (Maybe ()))
                        -> ((Snowflake Message, Text) -> IO (Maybe ()))
                        -> IO (Either KafkaError ())
-runConsumerSubscription kafkaConsumer replyIO = do
+runConsumerSubscription kafkaConsumer msgIO replyIO = do
   workerTask1 <- async $
-    catch (processKafkaMessages kafkaConsumer replyIO)
+    catch (processKafkaMessages kafkaConsumer msgIO replyIO)
       (\(e :: SomeException) -> putStrLn $ "Consumer loop exception: " ++ show e)
   workerTask2 <- async $
-    catch (processKafkaMessages kafkaConsumer replyIO)
+    catch (processKafkaMessages kafkaConsumer msgIO replyIO)
       (\(e :: SomeException) -> putStrLn $ "Consumer loop exception: " ++ show e)
 
   (_, result) <- waitAnyCancel [workerTask1, workerTask2]
@@ -79,9 +81,10 @@ runConsumerSubscription kafkaConsumer replyIO = do
   pure $ Right ()
 
 runKafkaConsumer ∷ Text
+                -> ((Snowflake Channel, Text) -> IO (Maybe ()))
                 -> ((Snowflake Message, Text) -> IO (Maybe ()))
                 -> IO ()
-runKafkaConsumer kafkaAddress replyIO = do
+runKafkaConsumer kafkaAddress msgIO replyIO = do
   res <- bracket mkConsumer clConsumer runHandler
   print res
   where
@@ -89,4 +92,4 @@ runKafkaConsumer kafkaAddress replyIO = do
     clConsumer (Left err) = return (Left err)
     clConsumer (Right kc) = maybe (Right ()) Left <$> closeConsumer kc
     runHandler (Left err) = return (Left err)
-    runHandler (Right kc) = runConsumerSubscription kc replyIO
+    runHandler (Right kc) = runConsumerSubscription kc msgIO replyIO
