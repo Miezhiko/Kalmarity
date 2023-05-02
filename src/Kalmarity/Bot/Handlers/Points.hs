@@ -48,10 +48,6 @@ awardPoint msg usr = do
   -- don't allow to give points to self
   guard $ author /= usrID
   Just gid <- pure (msg ^. #guildID)
-  -- this is to limit giving points only to admin
-  -- Right mem <- invoke $ GetGuildMember gid usr
-  -- perms <- permissionsIn' gid mem
-  -- guard $ perms `containsAll` administrator
   time <- P.now
   db_ $ DB.insert (MessagePoint (msg ^.  #id) gid usrID author time)
 

@@ -7,6 +7,7 @@ import           Kalmarity.Common
 import           Kalmarity.Bot.Config
 import           Kalmarity.Bot.Database
 import           Kalmarity.Bot.Handlers.GuildCreate
+import           Kalmarity.Bot.Handlers.Messages
 import           Kalmarity.Bot.Handlers.Points
 import           Kalmarity.Bot.Utils
 
@@ -43,6 +44,7 @@ registerEventHandlers = do
   registerCommandResponseHandler
   registerGuildCreateHandler
   registerPointGiveHandler
+  registerMessagesHandler
 
 registerCommandResponseHandler ∷
   ( BotC r

@@ -50,8 +50,8 @@ filterLogText _ _         = True
 filterDi ∷ Di.Core.Di Di.Level Di.Path Di.Message
          -> Di.Core.Di Di.Level Di.Path Di.Message
 filterDi = Di.Core.filter
-            (\l p lmsg -> Df1.Push "calamity" `notElem` p
-                       && filterLogText l lmsg)
+  (\l p lmsg -> (Df1.Push "calamity") `notElem` p
+              && filterLogText l lmsg)
 
 messageWithSnowflake ∷ (BotC r)
                     => (Snowflake Channel, Text)

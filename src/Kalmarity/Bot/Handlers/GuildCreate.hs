@@ -11,13 +11,13 @@ import           Calamity
 import           Optics
 
 import           Control.Monad
-import           Control.Monad.IO.Class           (MonadIO, liftIO)
+import           Control.Monad.IO.Class (MonadIO, liftIO)
 
-import qualified Data.Map                         as M
+import qualified Data.Map               as M
 
-import qualified Polysemy                         as P
-import qualified Polysemy.Fail                    as P
-import qualified Polysemy.Reader                  as P
+import qualified Polysemy               as P
+import qualified Polysemy.Fail          as P
+import qualified Polysemy.Reader        as P
 
 registerGuildCreateHandler ∷
   ( BotC r

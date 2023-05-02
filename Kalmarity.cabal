@@ -1,5 +1,5 @@
 name: Kalmarity
-version: 0.0.6
+version: 0.0.7
 license: AGPL-3
 
 build-type: Simple
@@ -30,7 +30,8 @@ Executable kalmarity
     Kalmarity.Bot.Commands.Homaridae,
     Kalmarity.Bot.Commands.Leaderboard,
     Kalmarity.Bot.Handlers.GuildCreate,
-    Kalmarity.Bot.Handlers.Points
+    Kalmarity.Bot.Handlers.Points,
+    Kalmarity.Bot.Handlers.Messages
   Hs-Source-Dirs: src
   default-extensions:
     DataKinds
