@@ -19,12 +19,12 @@ import           Control.Concurrent
 import           Control.Monad
 
 import qualified Data.Aeson                             as Aeson
+import           Data.Default
 import           Data.Flags
 import           Data.List
 import qualified Data.Map                               as Map
 import qualified Data.Text.Lazy                         as LT
 import qualified Data.Yaml                              as Yaml
-import           Data.Default
 
 import qualified Database.Persist.Sql                   as DB
 
@@ -58,10 +58,7 @@ messageWithSnowflake ∷ (BotC r)
                     => (Snowflake Channel, Text)
                     -> P.Sem r ()
 messageWithSnowflake (chanId, txt) = do
-  chanUpgrade <- upgrade chanId
-  case chanUpgrade of
-    Just chan -> void $ invoke (CreateMessage chan (def & #content ?~ txt))
-    Nothing   -> pure ()
+  void $ invoke (CreateMessage chanId (def & #content ?~ txt))
 
 replyWithSnowflake ∷ (BotC r, HasID Channel Message)
                   => (Snowflake Message, Text)
