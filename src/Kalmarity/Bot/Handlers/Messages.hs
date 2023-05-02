@@ -11,7 +11,7 @@ import           Optics
 import           Control.Monad
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 
-import           Data.Text              (unpack)
+import           Data.Text              (replace, unpack)
 
 import qualified Polysemy               as P
 import qualified Polysemy.Fail          as P
@@ -35,5 +35,5 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, _mbM) 
         chanId = show $ kmsg ^. #channelID
         authId = show $ kmsg ^. #author % to (getID :: MessageAuthor -> Snowflake User)
         genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
-        inTxt  = unpack (kmsg ^. #content)
+        inTxt  = unpack $ replace "<@1096396952117198868>" "" (kmsg ^. #content)
     liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
