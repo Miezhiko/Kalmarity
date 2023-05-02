@@ -22,6 +22,7 @@ import qualified Data.Aeson                             as Aeson
 import           Data.Flags
 import           Data.List
 import qualified Data.Map                               as Map
+import qualified Data.Text.Lazy                         as LT
 import qualified Data.Yaml                              as Yaml
 
 import qualified Database.Persist.Sql                   as DB
@@ -42,9 +43,15 @@ import qualified Polysemy.Time                          as P
 import           System.Directory
 import           System.Exit
 
-filterDi ∷ Di.Core.Di l Di.Path m -> Di.Core.Di l Di.Path m
-filterDi = Di.Core.filter (\_ p _ ->
-            Df1.Push "calamity" `notElem` p)
+filterLogText ∷ Df1.Level -> Df1.Message -> Bool
+filterLogText Df1.Debug t = not $ "Not handling event:" `isInfixOf` (LT.unpack (Df1.unMessage t))
+filterLogText _ _         = True
+
+filterDi ∷ Di.Core.Di Di.Level Di.Path Di.Message
+         -> Di.Core.Di Di.Level Di.Path Di.Message
+filterDi = Di.Core.filter
+            (\l p lmsg -> Df1.Push "calamity" `notElem` p
+                       && filterLogText l lmsg)
 
 messageWithSnowflake ∷ (BotC r)
                     => (Snowflake Channel, Text)
