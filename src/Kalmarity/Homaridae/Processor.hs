@@ -29,9 +29,9 @@ processSingleMessage myKey myVal msgIO replyIO =
     Right (channelId, userId, messageId) ->
       case messageId of
         Snowflake 0 -> case userId of
-              Snowflake 0 -> void $ msgIO (channelId, (pack myVal))
-              u -> let withMention = "<@" ++ show u ++ "> " ++ myVal
-                   in void $ msgIO (channelId, (pack withMention))
+                          Snowflake 0 -> void $ msgIO (channelId, (pack myVal))
+                          u -> let withMention = "<@" ++ show u ++ "> " ++ myVal
+                              in void $ msgIO (channelId, (pack withMention))
         m -> void $ replyIO (m, (pack myVal))
 
 processKafkaMessages ∷ KafkaConsumer

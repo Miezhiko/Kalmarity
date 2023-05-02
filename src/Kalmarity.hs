@@ -24,6 +24,7 @@ import           Data.List
 import qualified Data.Map                               as Map
 import qualified Data.Text.Lazy                         as LT
 import qualified Data.Yaml                              as Yaml
+import           Data.Default
 
 import qualified Database.Persist.Sql                   as DB
 
@@ -56,7 +57,11 @@ filterDi = Di.Core.filter
 messageWithSnowflake ∷ (BotC r)
                     => (Snowflake Channel, Text)
                     -> P.Sem r ()
-messageWithSnowflake (chan, txt) = void $ tell @Text chan txt
+messageWithSnowflake (chanId, txt) = do
+  chanUpgrade <- upgrade chanId
+  case chanUpgrade of
+    Just chan -> void $ invoke (CreateMessage chan (def & #content ?~ txt))
+    Nothing   -> pure ()
 
 replyWithSnowflake ∷ (BotC r, HasID Channel Message)
                   => (Snowflake Message, Text)
