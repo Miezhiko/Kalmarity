@@ -44,6 +44,7 @@ registerEventHandlers = do
   registerCommandResponseHandler
   registerGuildCreateHandler
   registerPointGiveHandler
+  registerPointRevokeHandler
   registerMessagesHandler
 
 registerCommandResponseHandler ∷

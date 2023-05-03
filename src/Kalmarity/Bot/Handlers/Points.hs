@@ -1,6 +1,7 @@
 module Kalmarity.Bot.Handlers.Points
   ( MessagePointMessages (..)
   , registerPointGiveHandler
+  , registerPointRevokeHandler
   ) where
 
 import           Kalmarity.Bot.Config
@@ -67,3 +68,22 @@ registerPointGiveHandler = void $ P.runNonDetMaybe
   npEmoji <- P.asks @Config $ view #pointAssignEmoji
   guard $ npEmoji == rct
   awardPoint msg usr
+
+registerPointRevokeHandler ∷
+  ( BotC r
+  , P.Members
+    [ Persistable
+    , P.Fail
+    , P.AtomicState MessagePointMessages
+    , P.GhcTime
+    , P.Reader Config
+    ] r
+  ) => P.Sem r ()
+registerPointRevokeHandler = void $ react @'MessageReactionRemoveEvt $
+  \(msg, usr, _chan, rct) -> do
+    pointEmoji <- P.asks @Config $ view #pointAssignEmoji
+    when (pointEmoji == rct) $
+      db_ $ deleteWhere
+        [ MessagePointMessage     ==. (msg ^. #id)
+        , MessagePointAssignedBy  ==. (usr ^. #id)
+        ]

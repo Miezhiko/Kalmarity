@@ -41,7 +41,7 @@ produceKafkaMessage kafkaAddress key msg =
     bracket mkProducer clProducer runHandler >>= print
     where
       mkProducer = newProducer $ producerProps kafkaAddress
-      clProducer (Left _)     = return ()
+      clProducer (Left _)     = pure ()
       clProducer (Right prod) = closeProducer prod
-      runHandler (Left err)   = return $ Left err
+      runHandler (Left err)   = pure $ Left err
       runHandler (Right prod) = sendMessage key msg prod

@@ -65,7 +65,7 @@ runKafkaConsumer kafkaAddress msgIO replyIO = do
   print res
   where
     mkConsumer = newConsumer (consumerProps kafkaAddress) consumerSub
-    clConsumer (Left err) = return (Left err)
+    clConsumer (Left err) = pure (Left err)
     clConsumer (Right kc) = maybe (Right ()) Left <$> closeConsumer kc
-    runHandler (Left err) = return (Left err)
+    runHandler (Left err) = pure (Left err)
     runHandler (Right kc) = runConsumerSubscription kc msgIO replyIO
