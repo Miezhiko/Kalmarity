@@ -23,15 +23,15 @@ processSingleMessage ∷ String
                     -> ((Snowflake Channel, Text) -> IO (Maybe ()))
                     -> ((Snowflake Message, Text) -> IO (Maybe ()))
                     -> IO ()
-processSingleMessage myKey myVal msgIO replyIO =
+processSingleMessage myKey myVal msgIO replyIO = do
   case parseSnowflakesTuple myKey of
     Left err                             -> print err
-    Right (channelId, userId, messageId) ->
+    Right (channelId, userId, messageId) -> do
       case messageId of
         Snowflake 0 -> case userId of
-                          Snowflake 0 -> void $ msgIO (channelId, (pack myVal))
-                          u -> let withMention = "<@" ++ show u ++ "> " ++ myVal
-                              in void $ msgIO (channelId, (pack withMention))
+          Snowflake 0 -> void $ msgIO (channelId, (pack myVal))
+          u -> let withMention = "<@" ++ show u ++ "> " ++ myVal
+              in void $ msgIO (channelId, (pack withMention))
         m -> void $ replyIO (m, (pack myVal))
 
 processKafkaMessages ∷ KafkaConsumer

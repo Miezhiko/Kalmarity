@@ -57,8 +57,9 @@ filterDi = Di.Core.filter
 messageWithSnowflake ∷ (BotC r)
                     => (Snowflake Channel, Text)
                     -> P.Sem r ()
-messageWithSnowflake (chanId, txt) = do
+messageWithSnowflake (chanId, txt) =
   void $ invoke (CreateMessage chanId (def & #content ?~ txt))
+  -- DEBUG: P.embed $ print r
 
 replyWithSnowflake ∷ (BotC r, HasID Channel Message)
                   => (Snowflake Message, Text)
