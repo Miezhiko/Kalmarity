@@ -34,8 +34,9 @@ main = hake $ do
 
   buildKalmarity :: IO ()
   buildKalmarity = do
-    cabal ["install", "--only-dependencies", "--overwrite-policy=always"]
-    cabal ["configure"]
-    cabal ["build"]
+    cabal ["install", "--only-dependencies"
+                    , "--overwrite-policy=always"]
+    cabalConfigure
+    cabalBuild
     getCabalBuildPath appName >>=
       \p -> copyFile p kalmarityExecutable
