@@ -10,6 +10,7 @@ import           Control.Monad             (forM_)
 import           Data.ByteString           (ByteString)
 import           Data.ByteString.Char8     (pack)
 import           Data.Text                 (Text)
+import           Data.Text.Encoding
 
 import           Kafka.Producer
 
@@ -29,14 +30,14 @@ mkMessage k v = ProducerRecord
                   , prHeaders   = mempty
                   }
 
-sendMessage ∷ String -> String -> KafkaProducer -> IO (Either KafkaError ())
+sendMessage ∷ String -> Text -> KafkaProducer -> IO (Either KafkaError ())
 sendMessage key msg prod = do
   err1 <- produceMessage prod (mkMessage (Just $ pack key)
-                                         (Just $ pack msg))
+                                         (Just $ encodeUtf8 msg))
   forM_ err1 print
   pure $ Right ()
 
-produceKafkaMessage ∷ Text -> String -> String -> IO ()
+produceKafkaMessage ∷ Text -> String -> Text -> IO ()
 produceKafkaMessage kafkaAddress key msg =
     bracket mkProducer clProducer runHandler >>= print
     where

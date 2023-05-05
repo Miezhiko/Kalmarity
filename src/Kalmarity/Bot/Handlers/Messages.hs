@@ -11,15 +11,14 @@ import           Optics
 import           Control.Monad
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 
-import           Data.Char              (isLetter, ord)
-import           Data.Text              (replace, unpack)
+import           Data.Text              (replace)
 
 import qualified Polysemy               as P
 import qualified Polysemy.Fail          as P
 import qualified Polysemy.Reader        as P
 
-containsRussian ∷ [Char] -> Bool
-containsRussian = any (\x -> 1040 <= ord x && ord x <=1103) . filter isLetter
+--containsRussian ∷ [Char] -> Bool
+--containsRussian = any (\x -> 1040 <= ord x && ord x <=1103) . filter isLetter
 
 registerMessagesHandler ∷
   ( BotC r
@@ -39,6 +38,5 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, _mbM) 
         chanId = show $ kmsg ^. #channelID
         authId = show $ kmsg ^. #author % to (getID :: MessageAuthor -> Snowflake User)
         genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
-        inTxt  = unpack $ replace "<@1096396952117198868>" "" (kmsg ^. #content)
-    unless (containsRussian inTxt) $
-      liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
+        inTxt  = replace "<@1096396952117198868>" "" (kmsg ^. #content)
+    liftIO $ produceKafkaMessage kafkaAddress genKey inTxt

@@ -15,8 +15,7 @@ import           Calamity.Commands.Context (FullContext)
 import           Control.Monad
 import           Control.Monad.IO.Class    (MonadIO, liftIO)
 
-import           Data.List
-import           Data.Text                 (Text, unpack)
+import qualified Data.Text                 as T
 
 import           Optics
 
@@ -33,7 +32,7 @@ registerHomaridaeCommand ∷
   ) => P.Sem (DSLState FullContext r) ()
 registerHomaridaeCommand = void
     $ help (const "Homaridae command.")
-    $ commandA @'[[Text]] "homaridae" ["h"]
+    $ commandA @'[[T.Text]] "homaridae" ["h"]
     $ \ctx ltxt -> do
       -- Just _gld <- pure (ctx ^. #guild)
       kafkaAddress <- P.asks @Config $ view #kafkaAddress
@@ -41,7 +40,7 @@ registerHomaridaeCommand = void
           chanId = show (ctx ^. #channel % to (getID :: Channel -> Snowflake Channel))
           authId = show (ctx ^. #user % to    (getID :: User -> Snowflake User))
           genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
-          inTxt  = intercalate " " $ map unpack ltxt
+          inTxt  = T.unwords ltxt
       liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
       -- no woofies
       {-

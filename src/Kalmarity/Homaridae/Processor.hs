@@ -12,16 +12,16 @@ import           Kalmarity.Homaridae.SnowFlake
    
 import           Control.Monad
 
-import qualified Data.ByteString.Char8         as BSC
 import           Data.Maybe                    (fromMaybe)
-import           Data.Text
+import qualified Data.Text                     as T
+import           Data.Text.Encoding
 
 import           Kafka.Consumer
 
-processSingleMessage ∷ String
-                    -> String
-                    -> ((Snowflake Channel, Text) -> IO (Maybe ()))
-                    -> ((Snowflake Message, Text) -> IO (Maybe ()))
+processSingleMessage ∷ T.Text
+                    -> T.Text
+                    -> ((Snowflake Channel, T.Text) -> IO (Maybe ()))
+                    -> ((Snowflake Message, T.Text) -> IO (Maybe ()))
                     -> IO ()
 processSingleMessage myKey myVal msgIO replyIO = do
   case parseSnowflakesTuple myKey of
@@ -29,14 +29,14 @@ processSingleMessage myKey myVal msgIO replyIO = do
     Right (channelId, userId, messageId) -> do
       case messageId of
         Snowflake 0 -> case userId of
-          Snowflake 0 -> void $ msgIO (channelId, (pack myVal))
-          u -> let withMention = "<@" ++ show u ++ "> " ++ myVal
-              in void $ msgIO (channelId, (pack withMention))
-        m -> void $ replyIO (m, (pack myVal))
+          Snowflake 0 -> void $ msgIO (channelId, myVal)
+          u -> let withMention = (T.pack $ "<@" ++ show u ++ "> ") <> myVal
+               in void $ msgIO (channelId, withMention)
+        m -> void $ replyIO (m, myVal)
 
 processKafkaMessages ∷ KafkaConsumer
-                    -> ((Snowflake Channel, Text) -> IO (Maybe ()))
-                    -> ((Snowflake Message, Text) -> IO (Maybe ()))
+                    -> ((Snowflake Channel, T.Text) -> IO (Maybe ()))
+                    -> ((Snowflake Message, T.Text) -> IO (Maybe ()))
                     -> IO ()
 processKafkaMessages kafkaConsumer msgIO replyIO = do
   result <- pollMessage kafkaConsumer (Timeout 2000)
@@ -49,8 +49,8 @@ processKafkaMessages kafkaConsumer msgIO replyIO = do
             _                      -> putStrLn $ "Polling response error: " ++ show err
         _ -> putStrLn $ "Error polling message: " ++ show err
     Right msg -> do
-      let myKey = BSC.unpack $ fromMaybe BSC.empty (crKey msg)
-          myVal = BSC.unpack $ fromMaybe BSC.empty (crValue msg)
+      let myKey = decodeUtf8 $ fromMaybe mempty (crKey msg)
+          myVal = decodeUtf8 $ fromMaybe mempty (crValue msg)
       processSingleMessage myKey myVal msgIO replyIO
       _ <- commitAllOffsets OffsetCommit kafkaConsumer
       putStrLn "Offset committed"

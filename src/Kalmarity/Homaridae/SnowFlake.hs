@@ -6,13 +6,14 @@ module Kalmarity.Homaridae.SnowFlake
   ( parseSnowflakesTuple
   ) where
 
-import           Calamity                 hiding (parse)
+import           Calamity         hiding (parse)
 
 import           Data.Coerce
+import qualified Data.Text        as T
 
 import           Text.Parsec
-import           Text.Parsec.String       (Parser)
-import           Text.Read                (readMaybe)
+import           Text.Parsec.Text (Parser)
+import           Text.Read        (readMaybe)
 
 snowflakesTupleParser ∷ Parser ( Snowflake Channel
                                , Snowflake User
@@ -34,8 +35,8 @@ snowflakeParser = do
     Just intSnowflake -> pure $ Snowflake intSnowflake
     Nothing           -> fail "Failed to parse Snowflake"
 
-parseSnowflakesTuple ∷ String
+parseSnowflakesTuple ∷ T.Text
                     -> Either ParseError ( Snowflake Channel
                                          , Snowflake User
                                          , Snowflake Message )
-parseSnowflakesTuple = parse snowflakesTupleParser ""
+parseSnowflakesTuple = parse snowflakesTupleParser mempty
