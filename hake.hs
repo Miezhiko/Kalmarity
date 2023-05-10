@@ -13,6 +13,10 @@ main = hake $ do
 
   kalmarityExecutable ♯ buildKalmarity ?> cleanCabalLocal
 
+  "deps | install deps only" ∫
+    cabal ["install", "--only-dependencies"
+                    , "--overwrite-policy=always"]
+
   "install | install to system" ◉ [kalmarityExecutable] ∰
     cabal ["install", "--overwrite-policy=always"]
 
@@ -33,10 +37,6 @@ main = hake $ do
        | otherwise                             -> buildPath </> appName
 
   buildKalmarity :: IO ()
-  buildKalmarity = do
-    cabal ["install", "--only-dependencies"
-                    , "--overwrite-policy=always"]
-    cabalConfigure
-    cabalBuild
-    getCabalBuildPath appName >>=
-      \p -> copyFile p kalmarityExecutable
+  buildKalmarity =
+    cabalConfigure >>
+    cabalBuild >> (getCabalBuildPath appName >>= flip copyFile kalmarityExecutable)

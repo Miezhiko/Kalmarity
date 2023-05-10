@@ -50,13 +50,13 @@ registerLeaderboardCommand = void
     freePointsRaw <- db $ selectList [FreePointGuild ==. getID gld] [Asc FreePointAssignedTo]
     let messagePointsMap
           = Map.fromListWith (+)
-          . fmap (,1)
-          $ messagePointAssignedTo . entityVal <$> messagePointsRaw
+          ∘ fmap (,1)
+          $ messagePointAssignedTo ∘ entityVal <$> messagePointsRaw
         freePointsMap
           = Map.fromListWith (+)
-          $ (freePointAssignedTo &&& freePointAmount) . entityVal <$> freePointsRaw
+          $ (freePointAssignedTo &&& freePointAmount) ∘ entityVal <$> freePointsRaw
         pointsMap = Map.unionWith (+) messagePointsMap freePointsMap
-        topFive = take 5 . sortOn (Down . snd) . Map.toList $ pointsMap
+        topFive = take 5 ∘ sortOn (Down ∘ snd) ∘ Map.toList $ pointsMap
     points <- for topFive $ \(u, p) -> do
       Just usr <- upgrade u
       pure (usr ^. #username, p)

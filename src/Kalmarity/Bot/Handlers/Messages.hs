@@ -18,7 +18,7 @@ import qualified Polysemy.Fail          as P
 import qualified Polysemy.Reader        as P
 
 --containsRussian ∷ [Char] -> Bool
---containsRussian = any (\x -> 1040 <= ord x && ord x <=1103) . filter isLetter
+--containsRussian = any (\x -> 1040 <= ord x && ord x <=1103) ∘ filter isLetter
 
 registerMessagesHandler ∷
   ( BotC r

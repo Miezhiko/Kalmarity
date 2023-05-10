@@ -53,7 +53,7 @@ whenJust ∷ Applicative f => Maybe a -> (a -> f ()) -> f ()
 whenJust = flip $ maybe (pure ())
 
 invoke_ ∷ _ => a -> P.Sem r ()
-invoke_ = void . invoke
+invoke_ = void ∘ invoke
 
 allVals ∷ (Enum a, Bounded a) => [a]
 allVals = [minBound..maxBound]

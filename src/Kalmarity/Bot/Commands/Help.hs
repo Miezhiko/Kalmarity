@@ -65,7 +65,7 @@ data CommandOrGroup m c a
 
 parameterTypeHelp ∷ [ParameterInfo] -> T.Text
 parameterTypeHelp pinfo =
-  let dedup = LH.toList . LH.fromList $ map (\(ParameterInfo _ t d) -> (t, d)) pinfo
+  let dedup = LH.toList ∘ LH.fromList $ map (\(ParameterInfo _ t d) -> (t, d)) pinfo
       typeDescs = T.unlines ["- " <> T.pack (show t) <> ": " <> d | (t, d) <- dedup]
   in if null dedup
       then ""
@@ -131,18 +131,18 @@ helpForGroup isAdmin ctx grp =
     <> commandsMsg
     <> aboutHelp ctx
  where
-  groups = filter (\g -> isAdmin || notHiddenG g) . onlyOriginals . LH.elems $ grp ^. #children
-  commands = filter (\c -> isAdmin || notHiddenC c)  . onlyOriginals . LH.elems $ grp ^. #commands
+  groups = filter (\g -> isAdmin || notHiddenG g) ∘ onlyOriginals ∘ LH.elems $ grp ^. #children
+  commands = filter (\c -> isAdmin || notHiddenC c)  ∘ onlyOriginals ∘ LH.elems $ grp ^. #commands
 
   groupsFmt = map formatWithAliases (groups ^.. traversed % #names)
   groupsMsg =
     if null groups
       then ""
-      else "The following subgroups exist:\n" <> (T.unlines . map ("- " <>) $ groupsFmt)
+      else "The following subgroups exist:\n" <> (T.unlines ∘ map ("- " <>) $ groupsFmt)
   commandsMsg =
     if null commands
       then ""
-      else "\nThe following subcommands exist:\n" <> (T.unlines . map (("- " <>) . fmtCommandWithDescription ctx) $ commands)
+      else "\nThe following subcommands exist:\n" <> (T.unlines ∘ map (("- " <>) ∘ fmtCommandWithDescription ctx) $ commands)
   aliases = NE.tail $ grp ^. #names
   checks' = map (^. #name) $ grp ^. #checks
   aliasesFmt =
@@ -157,11 +157,11 @@ helpForGroup isAdmin ctx grp =
 rootHelp ∷ CommandContext m c a => Bool -> c -> CommandHandler m c a -> T.Text
 rootHelp isAdmin ctx handler = "Commands:\n" <> groupsMsg <> commandsMsg <> adminHelp <> aboutHelp ctx
  where
-  groups = partitionVisibleG isAdmin . onlyOriginals . LH.elems $ handler ^. #groups
-  commands = partitionVisibleC isAdmin . onlyOriginals . LH.elems $ handler ^. #commands
+  groups = partitionVisibleG isAdmin ∘ onlyOriginals ∘ LH.elems $ handler ^. #groups
+  commands = partitionVisibleC isAdmin ∘ onlyOriginals ∘ LH.elems $ handler ^. #commands
   groupsFmt = mapBoth (map (fmtGroupWithDescription ctx)) groups
-  (groupsMsg, hGroupsMsg) = mapBoth (T.unlines . map ("- " <>)) groupsFmt
-  (commandsMsg, hcommandsMsg) = mapBoth (T.unlines . map (("- " <>) . fmtCommandWithDescription ctx)) commands
+  (groupsMsg, hGroupsMsg) = mapBoth (T.unlines ∘ map ("- " <>)) groupsFmt
+  (commandsMsg, hcommandsMsg) = mapBoth (T.unlines ∘ map (("- " <>) ∘ fmtCommandWithDescription ctx)) commands
   adminHelp = if null (snd groups) && null (snd commands)
     then ""
     else "\nAdmin Commands:\n" <> hGroupsMsg <> hcommandsMsg
