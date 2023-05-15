@@ -1,5 +1,5 @@
 name: Kalmarity
-version: 0.0.9
+version: 0.1.0
 license: AGPL-3
 
 build-type: Simple
@@ -20,6 +20,7 @@ Executable kalmarity
     Kalmarity.Bot,
     Kalmarity.Bot.Utils,
     Kalmarity.Bot.Config,
+    Kalmarity.Bot.Constants,
     Kalmarity.Bot.Database,
     Kalmarity.Bot.Orphans,
     Kalmarity.Bot.Schema,
