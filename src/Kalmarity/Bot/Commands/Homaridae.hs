@@ -5,6 +5,7 @@ module Kalmarity.Bot.Commands.Homaridae
 import           Kalmarity.Homaridae
 
 import           Kalmarity.Bot.Config
+import           Kalmarity.Bot.Constants
 import           Kalmarity.Bot.Database
 
 import           Calamity
@@ -34,17 +35,12 @@ registerHomaridaeCommand = void
     $ help (const "Homaridae command.")
     $ commandA @'[[T.Text]] "homaridae" ["h"]
     $ \ctx ltxt -> do
-      -- Just _gld <- pure (ctx ^. #guild)
-      kafkaAddress <- P.asks @Config $ view #kafkaAddress
-      let msgId  = show (ctx ^. #message % to (getID :: Message -> Snowflake Message))
-          chanId = show (ctx ^. #channel % to (getID :: Channel -> Snowflake Channel))
-          authId = show (ctx ^. #user % to    (getID :: User -> Snowflake User))
-          genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
-          inTxt  = T.unwords ltxt
-      liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
-      -- no woofies
-      {-
-      tell_ @Embed ctx $ def
-          & #title ?~ "Homaridae"
-          & #description ?~ "woof"
-      -}
+      Just gld <- pure (ctx ^. #guild)
+      when (ownGuildId == (gld ^. #id)) $ do
+        kafkaAddress <- P.asks @Config $ view #kafkaAddress
+        let msgId  = show (ctx ^. #message % to (getID :: Message -> Snowflake Message))
+            chanId = show (ctx ^. #channel % to (getID :: Channel -> Snowflake Channel))
+            authId = show (ctx ^. #user % to    (getID :: User -> Snowflake User))
+            genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
+            inTxt  = T.unwords ltxt
+        liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
