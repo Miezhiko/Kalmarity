@@ -49,7 +49,7 @@ registerMessagesHandler ∷
   ) => P.Sem r () -- (Message, Maybe User, Maybe Member)
 registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) ->
   let kmentions   = kmsg ^. #mentions
-      kmentionIds = map (\u -> (getID :: User -> Snowflake User) u) kmentions
+      kmentionIds = map (getID :: User -> Snowflake User) kmentions
   in when (ownUserId `elem` kmentionIds) $ do
     kafkaAddress <- P.asks @Config $ view #kafkaAddress
     Just gld <- pure (kmsg ^. #guildID)
