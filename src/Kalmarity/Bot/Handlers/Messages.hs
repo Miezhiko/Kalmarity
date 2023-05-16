@@ -34,7 +34,7 @@ aiResponse ∷ (Is k1 A_Getter, Is k2 A_Getter, Is k3 A_Getter,
 aiResponse kafkaAddress kmsg =
   let msgId  = show $ kmsg ^. #id
       chanId = show $ kmsg ^. #channelID
-      authId = show $ show $ kmsg ^. #author % to (getID :: MessageAuthor -> Snowflake User)
+      authId = show $ kmsg ^. #author % to (getID :: MessageAuthor -> Snowflake User)
       genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
       inTxt  = T.replace "<@1096396952117198868>" "" (kmsg ^. #content)
   in liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
