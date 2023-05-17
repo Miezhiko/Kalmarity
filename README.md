@@ -19,3 +19,5 @@ bot.json
 ```
 
 ![Kalmarity](https://user-images.githubusercontent.com/38455533/233698500-bd388142-509b-4ab8-bfa5-5b1b6e8e519f.png)
+
+![image](https://github.com/Miezhiko/Kalmarity/assets/38455533/2df79d77-5f42-4aa5-9773-2cd050280e15)
