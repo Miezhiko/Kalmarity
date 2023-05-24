@@ -8,6 +8,7 @@ module Kalmarity.Homaridae.Processor
 
 import           Calamity
 
+import           Kalmarity.Common
 import           Kalmarity.Homaridae.SnowFlake
    
 import           Control.Monad
@@ -18,12 +19,17 @@ import           Data.Text.Encoding
 
 import           Kafka.Consumer
 
-processSingleMessage ∷ T.Text
-                    -> T.Text
-                    -> ((Snowflake Channel, T.Text) -> IO (Maybe ()))
-                    -> ((Snowflake Message, T.Text) -> IO (Maybe ()))
-                    -> IO ()
-processSingleMessage myKey myVal msgIO replyIO = do
+splitText ∷ T.Text -> [T.Text]
+splitText ""  = []
+splitText str = T.take 1980 str : splitText (T.drop 1980 str)
+
+processSingleMessages ∷ T.Text
+                     -> [T.Text]
+                     -> ((Snowflake Channel, T.Text) -> IO (Maybe ()))
+                     -> ((Snowflake Message, T.Text) -> IO (Maybe ()))
+                     -> IO ()
+processSingleMessages _ [] _ _                    = pure ()
+processSingleMessages myKey [myVal] msgIO replyIO = do
   case parseSnowflakesTuple myKey of
     Left err                             -> print err
     Right (channelId, userId, messageId) -> do
@@ -33,6 +39,16 @@ processSingleMessage myKey myVal msgIO replyIO = do
           u -> let withMention = (T.pack $ "<@" ++ show u ++ "> ") <> myVal
                in void $ msgIO (channelId, withMention)
         m -> void $ replyIO (m, myVal)
+processSingleMessages myKey (x:xs) msgIO replyIO = do
+  processSingleMessages myKey [x] msgIO replyIO
+  processSingleMessages myKey xs msgIO replyIO
+
+processSingleMessage ∷ T.Text
+                    -> T.Text
+                    -> ((Snowflake Channel, T.Text) -> IO (Maybe ()))
+                    -> ((Snowflake Message, T.Text) -> IO (Maybe ()))
+                    -> IO ()
+processSingleMessage = (∘ splitText) ∘ processSingleMessages
 
 processKafkaMessages ∷ KafkaConsumer
                     -> ((Snowflake Channel, T.Text) -> IO (Maybe ()))
