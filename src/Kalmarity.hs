@@ -59,14 +59,12 @@ messageWithSnowflake ∷ (BotC r)
                     -> P.Sem r ()
 messageWithSnowflake (chanId, txt) =
   void $ invoke (CreateMessage chanId (def & #content ?~ txt))
-  -- DEBUG: P.embed $ print r
 
 replyWithSnowflake ∷ (BotC r, HasID Channel Message)
                   => (Snowflake Message, Text)
                   -> P.Sem r ()
-replyWithSnowflake (msgId, txt) = do
-  maybeMsgFromId <- getMessage msgId
-  case maybeMsgFromId of
+replyWithSnowflake (msgId, txt) =
+  getMessage msgId >>= \case
     Just msgFromId -> void $ reply @Text msgFromId txt
     Nothing        -> pure ()
 
@@ -119,6 +117,7 @@ main = do
     then Aeson.eitherDecodeFileStrict path >>= either die pure
     else die "error: unrecoognized file extension (must be either json or yaml)"
   runBotWith cfg
+
  where ifM mb x y = do
         b <- mb
         if b then x else y

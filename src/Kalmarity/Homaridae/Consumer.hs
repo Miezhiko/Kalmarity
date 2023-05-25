@@ -44,7 +44,7 @@ runConsumerSubscription kafkaConsumer msgIO replyIO = do
       (\(e :: SomeException) -> putStrLn $ "Consumer loop exception: " ++ show e)
 
   -- run second worker second afer
-  -- each worker poll rate is 2s
+  -- each worker poll rate is 500ms (was 2s)
   threadDelay 1000000
 
   workerTask2 <- async $

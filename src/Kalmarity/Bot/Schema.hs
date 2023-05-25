@@ -19,6 +19,7 @@
 module Kalmarity.Bot.Schema where
 
 import           Kalmarity.Bot.Orphans ()
+import           Kalmarity.Common
 
 import           Calamity
 
@@ -35,7 +36,7 @@ newtype PersistFieldEnum a
 instance (Enum (PersistFieldEnum a)
    , Bounded (PersistFieldEnum a)
    , Ord (PersistFieldEnum a)) => PersistField (PersistFieldEnum a) where
-  toPersistValue = PersistInt64 . fromIntegral . fromEnum
+  toPersistValue = PersistInt64 ∘ fromIntegral ∘ fromEnum
   fromPersistValue (PersistInt64 n) = Right $ toEnum (fromIntegral n)
   fromPersistValue _                = Left "Error parsing enum field" -- TODO better message
 

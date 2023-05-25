@@ -39,9 +39,9 @@ processSingleMessages myKey [myVal] msgIO replyIO = do
           u -> let withMention = (T.pack $ "<@" ++ show u ++ "> ") <> myVal
                in void $ msgIO (channelId, withMention)
         m -> void $ replyIO (m, myVal)
-processSingleMessages myKey (x:xs) msgIO replyIO = do
-  processSingleMessages myKey [x] msgIO replyIO
-  processSingleMessages myKey xs msgIO replyIO
+processSingleMessages myKey (x:xs) msgIO replyIO =
+     processSingleMessages myKey [x] msgIO replyIO
+  >> processSingleMessages myKey xs msgIO replyIO
 
 processSingleMessage ∷ T.Text
                     -> T.Text
@@ -55,7 +55,7 @@ processKafkaMessages ∷ KafkaConsumer
                     -> ((Snowflake Message, T.Text) -> IO (Maybe ()))
                     -> IO ()
 processKafkaMessages kafkaConsumer msgIO replyIO = do
-  result <- pollMessage kafkaConsumer (Timeout 2000)
+  result <- pollMessage kafkaConsumer (Timeout 500)
   case result of
     Left err ->
       case err of
@@ -69,5 +69,5 @@ processKafkaMessages kafkaConsumer msgIO replyIO = do
           myVal = decodeUtf8 $ fromMaybe mempty (crValue msg)
       processSingleMessage myKey myVal msgIO replyIO
       _ <- commitAllOffsets OffsetCommit kafkaConsumer
-      putStrLn "Offset committed"
+      putStrLn $ "Offset committed " ++ show (crOffset msg)
   processKafkaMessages kafkaConsumer msgIO replyIO
