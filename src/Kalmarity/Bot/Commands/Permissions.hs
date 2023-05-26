@@ -44,22 +44,28 @@ registerPermissionsCommand = do
     $ commandA @'[] "allow" []
     $ \ctx -> do
       let authId = ctx ^. #user % to (getID :: User -> Snowflake User)
-      when (ownerUserId == authId) $ do
-        liftIO $ atomicWriteIORef aiForAll True
-        tell_ @Embed ctx $ def
-          & #title ?~ "Permissions"
-          & #description ?~ "everyone can chat with me now"
+      if (ownerUserId == authId)
+        then do liftIO $ atomicWriteIORef aiForAll True
+                tell_ @Embed ctx $ def
+                  & #title ?~ "Permissions"
+                  & #description ?~ "everyone can chat with me now"
+        else tell_ @Embed ctx $ def
+                & #title ?~ "Permissions"
+                & #description ?~ "only owner can allow"
 
   void
     $ help (const "Limit AI to specific role only.")
     $ commandA @'[] "forbid" []
     $ \ctx -> do
       let authId = ctx ^. #user % to (getID :: User -> Snowflake User)
-      when (ownerUserId == authId) $ do
-        liftIO $ atomicWriteIORef aiForAll False
-        tell_ @Embed ctx $ def
-          & #title ?~ "Permissions"
-          & #description ?~ "Only specific people can chat with me now"
+      if (ownerUserId == authId)
+        then do liftIO $ atomicWriteIORef aiForAll False
+                tell_ @Embed ctx $ def
+                  & #title ?~ "Permissions"
+                  & #description ?~ "Only specific people can chat with me now"
+        else tell_ @Embed ctx $ def
+                & #title ?~ "Permissions"
+                & #description ?~ "only owner can forbid"
 
   void
     $ help (const "Check if AI mode is permissive for all.")
