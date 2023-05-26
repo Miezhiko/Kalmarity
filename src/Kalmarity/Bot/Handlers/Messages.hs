@@ -2,6 +2,7 @@ module Kalmarity.Bot.Handlers.Messages where
 
 import           Kalmarity.Homaridae
 
+import           Kalmarity.Bot.Commands.Permissions
 import           Kalmarity.Bot.Config
 import           Kalmarity.Bot.Constants
 
@@ -10,14 +11,15 @@ import           Calamity
 import           Optics
 
 import           Control.Monad
-import           Control.Monad.IO.Class  (MonadIO, liftIO)
+import           Control.Monad.IO.Class             (MonadIO, liftIO)
 
-import qualified Data.Text               as T
-import qualified Data.Vector.Unboxing    as VU
+import           Data.IORef                         (readIORef)
+import qualified Data.Text                          as T
+import qualified Data.Vector.Unboxing               as VU
 
-import qualified Polysemy                as P
-import qualified Polysemy.Fail           as P
-import qualified Polysemy.Reader         as P
+import qualified Polysemy                           as P
+import qualified Polysemy.Fail                      as P
+import qualified Polysemy.Reader                    as P
 
 --containsRussian ∷ [Char] -> Bool
 --containsRussian = any (\x -> 1040 <= ord x && ord x <=1103) ∘ filter isLetter
@@ -56,7 +58,11 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) -
     if (ownGuildId == gld)
       then aiResponse kafkaAddress kmsg
       else do
-        Just msgMem <- pure mbM
-        let mRoles   = msgMem ^. #roles
-        when (modRoleId `VU.elem` mRoles) $
-          aiResponse kafkaAddress kmsg
+        isAiAllowedForAll <- liftIO $ readIORef aiForAll
+        if isAiAllowedForAll
+          then aiResponse kafkaAddress kmsg
+          else do
+            Just msgMem <- pure mbM
+            let mRoles   = msgMem ^. #roles
+            when (modRoleId `VU.elem` mRoles) $
+              aiResponse kafkaAddress kmsg
