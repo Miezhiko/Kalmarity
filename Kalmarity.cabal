@@ -1,5 +1,5 @@
 name: Kalmarity
-version: 0.1.4
+version: 0.1.5
 license: AGPL-3
 
 build-type: Simple
@@ -33,6 +33,7 @@ Executable kalmarity
     Kalmarity.Bot.Commands.Pointfree,
     Kalmarity.Bot.Commands.Permissions,
     Kalmarity.Bot.Commands.Leaderboard,
+    Kalmarity.Bot.Commands.AiColors,
     Kalmarity.Bot.Handlers.GuildCreate,
     Kalmarity.Bot.Handlers.Points,
     Kalmarity.Bot.Handlers.Messages

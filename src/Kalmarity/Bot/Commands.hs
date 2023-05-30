@@ -2,6 +2,7 @@ module Kalmarity.Bot.Commands
   ( registerBotCommands
   ) where
 
+import           Kalmarity.Bot.Commands.AiColors
 import           Kalmarity.Bot.Commands.Help
 import           Kalmarity.Bot.Commands.Homaridae
 import           Kalmarity.Bot.Commands.Leaderboard
@@ -44,3 +45,4 @@ registerBotCommands = void $ addCommands $ do
   registerLeaderboardCommand
   registerPointfreeCommand
   registerPermissionsCommand
+  registerAiColorsCommand
