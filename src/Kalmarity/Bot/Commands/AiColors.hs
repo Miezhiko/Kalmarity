@@ -5,7 +5,6 @@ module Kalmarity.Bot.Commands.AiColors
 import           Kalmarity.Homaridae
 
 import           Kalmarity.Bot.Config
-import           Kalmarity.Bot.Constants
 import           Kalmarity.Bot.Database
 
 import           Calamity
@@ -35,12 +34,10 @@ registerAiColorsCommand = void
     $ help (const "AI colour command.")
     $ commandA @'[[T.Text]] "colour" ["color"]
     $ \ctx ltxt -> do
-      Just gld <- pure (ctx ^. #guild)
-      when (ownGuildId == (gld ^. #id)) $ do
-        kafkaAddress <- P.asks @Config $ view #kafkaAddress
-        let msgId  = show (ctx ^. #message % to (getID :: Message -> Snowflake Message))
-            chanId = show (ctx ^. #channel % to (getID :: Channel -> Snowflake Channel))
-            authId = show (ctx ^. #user % to    (getID :: User -> Snowflake User))
-            genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId ++ "|1"
-            inTxt  = T.unwords ltxt
-        liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
+      kafkaAddress <- P.asks @Config $ view #kafkaAddress
+      let msgId  = show (ctx ^. #message % to (getID :: Message -> Snowflake Message))
+          chanId = show (ctx ^. #channel % to (getID :: Channel -> Snowflake Channel))
+          authId = show (ctx ^. #user % to    (getID :: User -> Snowflake User))
+          genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId ++ "|1"
+          inTxt  = T.unwords ltxt
+      liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
