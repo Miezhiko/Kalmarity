@@ -1,6 +1,7 @@
 module Kalmarity.Bot.Handlers.Messages where
 
 import           Kalmarity.Homaridae
+import           Kalmarity.Twitter
 
 import           Kalmarity.Bot.Commands.Permissions
 import           Kalmarity.Bot.Config
@@ -32,13 +33,12 @@ aiResponse ∷ (Is k1 A_Getter, Is k2 A_Getter, Is k3 A_Getter,
               LabelOptic "channelID" k4 s s a2 a2,
               LabelOptic "author" k5 s s MessageAuthor MessageAuthor,
               MonadIO m) =>
-  T.Text -> s -> m ()
-aiResponse kafkaAddress kmsg =
+  T.Text -> s -> T.Text -> m ()
+aiResponse kafkaAddress kmsg inTxt =
   let msgId  = show $ kmsg ^. #id
       chanId = show $ kmsg ^. #channelID
       authId = show $ kmsg ^. #author % to (getID :: MessageAuthor -> Snowflake User)
       genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
-      inTxt  = T.replace "<@1096396952117198868>" "" (kmsg ^. #content)
   in liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
 
 registerMessagesHandler ∷
@@ -51,18 +51,25 @@ registerMessagesHandler ∷
   ) => P.Sem r () -- (Message, Maybe User, Maybe Member)
 registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) ->
   let kmentions   = kmsg ^. #mentions
+      tContent    = kmsg ^. #content
       kmentionIds = map (getID :: User -> Snowflake User) kmentions
-  in when (ownUserId `elem` kmentionIds) $ do
-    kafkaAddress <- P.asks @Config $ view #kafkaAddress
+      authId      = kmsg ^. #author % to (getID :: MessageAuthor -> Snowflake User)
+  in when (authId /= ownUserId) $ do
     Just gld <- pure (kmsg ^. #guildID)
-    if (ownGuildId == gld)
-      then aiResponse kafkaAddress kmsg
-      else do
-        isAiAllowedForAll <- liftIO $ readIORef aiForAll
-        if isAiAllowedForAll
-          then aiResponse kafkaAddress kmsg
-          else do
-            Just msgMem <- pure mbM
-            let mRoles   = msgMem ^. #roles
-            when (modRoleId `VU.elem` mRoles) $
-              aiResponse kafkaAddress kmsg
+    when (ownGuildId == gld) $
+      when(containsTwitterLink tContent) $
+        void $ reply kmsg (replaceLinks tContent)
+    when (ownUserId `elem` kmentionIds) $ do
+      let tCC = T.replace "<@1096396952117198868>" "" tContent
+      kafkaAddress <- P.asks @Config $ view #kafkaAddress
+      if (ownGuildId == gld)
+        then aiResponse kafkaAddress kmsg tCC
+        else do
+          isAiAllowedForAll <- liftIO $ readIORef aiForAll
+          if isAiAllowedForAll
+            then aiResponse kafkaAddress kmsg tCC
+            else do
+              Just msgMem <- pure mbM
+              let mRoles   = msgMem ^. #roles
+              when (modRoleId `VU.elem` mRoles) $
+                aiResponse kafkaAddress kmsg tCC

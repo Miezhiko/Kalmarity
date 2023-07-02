@@ -1,3 +1,7 @@
+{-# LANGUAGE
+    TemplateHaskell
+  #-}
+
 module Kalmarity.Bot.Database
   ( Persistable (..)
   , db

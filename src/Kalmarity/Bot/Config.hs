@@ -3,6 +3,7 @@
   , DerivingStrategies
   , DuplicateRecordFields
   , MultiParamTypeClasses
+  , TemplateHaskell
   , UndecidableInstances
   #-}
 

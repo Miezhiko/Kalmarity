@@ -1,5 +1,5 @@
 name: Kalmarity
-version: 0.1.6
+version: 0.1.7
 license: AGPL-3
 
 build-type: Simple
@@ -10,6 +10,7 @@ Executable kalmarity
   Main-Is: Kalmarity.hs
   Other-Modules:
     Kalmarity.Common,
+    Kalmarity.Twitter,
     Kalmarity.Homaridae,
     Kalmarity.Homaridae.SnowFlake,
     Kalmarity.Homaridae.BotEff,
@@ -52,7 +53,6 @@ Executable kalmarity
     PartialTypeSignatures
     PolyKinds
     ScopedTypeVariables
-    TemplateHaskell
     TupleSections
     TypeApplications
     TypeFamilies
