@@ -1,5 +1,5 @@
 name: Kalmarity
-version: 0.1.5
+version: 0.1.6
 license: AGPL-3
 
 build-type: Simple
@@ -31,6 +31,7 @@ Executable kalmarity
     Kalmarity.Bot.Commands.Help,
     Kalmarity.Bot.Commands.Homaridae,
     Kalmarity.Bot.Commands.Pointfree,
+    Kalmarity.Bot.Commands.System,
     Kalmarity.Bot.Commands.Permissions,
     Kalmarity.Bot.Commands.Leaderboard,
     Kalmarity.Bot.Commands.AiColors,
@@ -95,4 +96,5 @@ Executable kalmarity
     , parsec
     , bytestring
     , time
+    , process
     , pointfree             >= 1.1.1.10

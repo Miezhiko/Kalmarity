@@ -8,6 +8,7 @@ import           Kalmarity.Bot.Commands.Homaridae
 import           Kalmarity.Bot.Commands.Leaderboard
 import           Kalmarity.Bot.Commands.Permissions
 import           Kalmarity.Bot.Commands.Pointfree
+import           Kalmarity.Bot.Commands.System
 import           Kalmarity.Bot.Commands.Utils
 import           Kalmarity.Bot.Config
 import           Kalmarity.Bot.Database
@@ -46,3 +47,4 @@ registerBotCommands = void $ addCommands $ do
   registerPointfreeCommand
   registerPermissionsCommand
   registerAiColorsCommand
+  registerSystemCommand
