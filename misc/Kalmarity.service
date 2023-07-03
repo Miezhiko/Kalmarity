@@ -1,0 +1,14 @@
+[Unit]
+Description=Kalmarity
+After=network.target
+After=multi-user.target
+
+[Service]
+Type=simple
+User=mawa
+WorkingDirectory=/data/contrib/haskell/Kalmarity
+ExecStart=/usr/bin/hake run
+ExecStop=killall Kalmarity
+
+[Install]
+WantedBy=multi-user.target
