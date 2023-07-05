@@ -7,15 +7,15 @@ module Kalmarity.Twitter
   , replaceLinks
   ) where
 
-import           Data.Text        (Text)
-import qualified Data.Text        as T
+import           Data.Text           (Text)
+import qualified Data.Text           as T
 import           Text.Parsec
-import           Text.Parsec.Text (Parser)
+import           Text.Parsec.Text    (Parser)
 
 twitterLinkParser ∷ Parser Text
 twitterLinkParser = do
   _ <- string "https://twitter.com/"
-  username <- many1 alphaNum
+  username <- many1 (alphaNum <|> char '_')
   _ <- char '/'
   _ <- string "status/"
   tweetID <- many1 digit
