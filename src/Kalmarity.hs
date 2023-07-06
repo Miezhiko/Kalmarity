@@ -58,7 +58,7 @@ messageWithSnowflake ∷ (BotC r)
                     => (Snowflake Channel, Text)
                     -> P.Sem r ()
 messageWithSnowflake (chanId, txt) =
-  void $ invoke (CreateMessage chanId (def & #content ?~ txt))
+  invoke_ (CreateMessage chanId (def & #content ?~ txt))
 
 replyWithSnowflake ∷ (BotC r, HasID Channel Message)
                   => (Snowflake Message, Text)

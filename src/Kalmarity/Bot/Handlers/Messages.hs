@@ -6,6 +6,7 @@ import           Kalmarity.Twitter
 import           Kalmarity.Bot.Commands.Permissions
 import           Kalmarity.Bot.Config
 import           Kalmarity.Bot.Constants
+import           Kalmarity.Bot.Utils
 
 import           Calamity
 
@@ -59,6 +60,7 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) -
     when (ownGuildId == gld) $
       when(containsTwitterLink tContent) $
         void $ reply kmsg (replaceLinks tContent)
+        >> invoke_ (DeleteMessage (kmsg ^. #channelID) kmsg)
     when (ownUserId `elem` kmentionIds) $ do
       let tCC = T.replace "<@1096396952117198868>" "" tContent
       kafkaAddress <- P.asks @Config $ view #kafkaAddress
