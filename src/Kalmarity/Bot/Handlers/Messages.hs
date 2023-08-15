@@ -59,7 +59,10 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) -
     Just gld <- pure (kmsg ^. #guildID)
     when (ownGuildId == gld) $
       when(containsTwitterLink tContent) $
-        void $ reply kmsg (replaceLinks tContent)
+        let newText = replaceLinks tContent
+            mention = T.pack $ "<@" ++ (show authId) ++ "> :\n"
+            finText = mention <> newText
+        in void $ reply kmsg finText
         >> invoke_ (DeleteMessage (kmsg ^. #channelID) kmsg)
     when (ownUserId `elem` kmentionIds) $ do
       let tCC = T.replace "<@1096396952117198868>" "" tContent
@@ -72,6 +75,6 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) -
             then aiResponse kafkaAddress kmsg tCC
             else do
               Just msgMem <- pure mbM
-              let mRoles   = msgMem ^. #roles
+              let mRoles = msgMem ^. #roles
               when (modRoleId `VU.elem` mRoles) $
                 aiResponse kafkaAddress kmsg tCC
