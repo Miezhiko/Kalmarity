@@ -13,36 +13,23 @@ import           Network.HTTP.Client.TLS
 import           System.IO
 
 request ∷ T.Text → ChatCompletionRequest
-request req = ChatCompletionRequest 
-         { chcrModel = ModelId "gpt-3.5-turbo-16k"
-         , chcrMessages = 
-            [ChatMessage { chmContent       = Just req
-                         , chmRole          = "user"
-                         , chmFunctionCall  = Nothing
-                         , chmName          = Nothing
-                         }
-            ]
-         , chcrTemperature = Nothing
-         , chcrTopP = Nothing
-         , chcrN = Nothing
-         , chcrStream = Nothing
-         , chcrStop = Nothing
-         , chcrMaxTokens = Nothing
-         , chcrPresencePenalty = Nothing
-         , chcrFrequencyPenalty = Nothing
-         , chcrLogitBias = Nothing
-         , chcrUser = Nothing
-         , chcrFunctions = Nothing
-         , chcrFunctionCall = Nothing
-         }
+request req =
+  defaultChatCompletionRequest
+    (ModelId "gpt-3.5-turbo-16k")
+    [ ChatMessage
+        { chmRole         = "user"
+        , chmContent      = Just req
+        , chmFunctionCall = Nothing
+        , chmName         = Nothing }
+    ] 
 
 chimeraBaseUrl ∷ BaseUrl
 chimeraBaseUrl = BaseUrl Https "https://chimeragpt.adventblocks.cc/api/v1" 443 ""
 
 readFileStrict ∷ FilePath → IO String
 readFileStrict path = do
-  handle <- openFile path ReadMode
-  contents <- hGetContents handle
+  handle    <- openFile path ReadMode
+  contents  <- hGetContents handle
   length contents `seq` hClose handle
   return contents
 

@@ -37,5 +37,4 @@ registerOpenAICommand = void
       Just _gld <- pure (ctx ^. #guild)
       let inTxt  = T.unwords ltxt
       out <- liftIO $ openai inTxt
-      unmonad <- pure out -- really weird LOL
-      void $ reply ctx unmonad
+      void $ reply ctx out
