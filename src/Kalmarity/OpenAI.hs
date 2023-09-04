@@ -15,23 +15,26 @@ import           System.IO
 request ∷ T.Text → ChatCompletionRequest
 request req =
   defaultChatCompletionRequest
-    (ModelId "gpt-3.5-turbo-16k")
+    (ModelId "llama-2-70b-chat") -- gpt-3.5-turbo-16k
     [ ChatMessage
         { chmRole         = "user"
         , chmContent      = Just req
         , chmFunctionCall = Nothing
         , chmName         = Nothing }
-    ] 
+    ]
 
 chimeraBaseUrl ∷ BaseUrl
-chimeraBaseUrl = BaseUrl Https "https://chimeragpt.adventblocks.cc/api/v1" 443 ""
+chimeraBaseUrl = BaseUrl Https "chimeragpt.adventblocks.cc" 443 "/api"
+
+trimNewLines ∷ String → String
+trimNewLines = filter (/= '\n')
 
 readFileStrict ∷ FilePath → IO String
 readFileStrict path = do
   handle    <- openFile path ReadMode
   contents  <- hGetContents handle
   length contents `seq` hClose handle
-  return contents
+  pure $ trimNewLines contents
 
 openai ∷ T.Text → IO T.Text
 openai req =

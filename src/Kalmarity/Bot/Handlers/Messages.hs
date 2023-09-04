@@ -2,6 +2,7 @@ module Kalmarity.Bot.Handlers.Messages where
 
 import           Kalmarity.Homaridae
 import           Kalmarity.Twitter
+import           Kalmarity.OpenAI
 
 import           Kalmarity.Bot.Commands.Permissions
 import           Kalmarity.Bot.Config
@@ -76,5 +77,7 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) -
             else do
               Just msgMem <- pure mbM
               let mRoles = msgMem ^. #roles
-              when (modRoleId `VU.elem` mRoles) $
-                aiResponse kafkaAddress kmsg tCC
+              if (modRoleId `VU.elem` mRoles)
+                then aiResponse kafkaAddress kmsg tCC
+                else do out <- liftIO $ openai tCC
+                        void $ reply kmsg out
