@@ -36,5 +36,5 @@ registerOpenAICommand = void
     $ \ctx ltxt -> do
       Just _gld <- pure (ctx ^. #guild)
       let inTxt  = T.unwords ltxt
-      out <- liftIO $ openai inTxt
+      out <- liftIO $ openai inTxt "gpt-3.5-turbo-16k"
       void $ reply ctx out

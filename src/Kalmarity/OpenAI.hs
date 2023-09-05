@@ -12,10 +12,10 @@ import           Network.HTTP.Client.TLS
 
 import           System.IO
 
-request ∷ T.Text → ChatCompletionRequest
-request req =
+request ∷ T.Text → T.Text → ChatCompletionRequest
+request req modelId =
   defaultChatCompletionRequest
-    (ModelId "llama-2-70b-chat") -- gpt-3.5-turbo-16k
+    (ModelId modelId)
     [ ChatMessage
         { chmRole         = "user"
         , chmContent      = Just req
@@ -36,12 +36,12 @@ readFileStrict path = do
   length contents `seq` hClose handle
   pure $ trimNewLines contents
 
-openai ∷ T.Text → IO T.Text
-openai req =
+openai ∷ T.Text → T.Text → IO T.Text
+openai req modelId =
   do manager <- newManager tlsManagerSettings
      apiKey  <- T.pack <$> readFileStrict "/etc/chat.rs/chimera.txt"
      let client = makeOpenAIClient' chimeraBaseUrl apiKey manager 4
-     result <- completeChat client (request req)
+     result <- completeChat client (request req modelId)
      case result of
        Left failure  -> pure $ T.pack (show failure)
        Right success ->

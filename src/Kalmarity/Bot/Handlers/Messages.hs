@@ -1,8 +1,8 @@
 module Kalmarity.Bot.Handlers.Messages where
 
 import           Kalmarity.Homaridae
-import           Kalmarity.Twitter
 import           Kalmarity.OpenAI
+import           Kalmarity.Twitter
 
 import           Kalmarity.Bot.Commands.Permissions
 import           Kalmarity.Bot.Config
@@ -34,14 +34,23 @@ aiResponse ∷ (Is k1 A_Getter, Is k2 A_Getter, Is k3 A_Getter,
                 "content" k2 s s T.Text T.Text,
               LabelOptic "channelID" k4 s s a2 a2,
               LabelOptic "author" k5 s s MessageAuthor MessageAuthor,
-              MonadIO m) =>
-  T.Text -> s -> T.Text -> m ()
+              MonadIO m) ⇒
+  T.Text → s → T.Text → m ()
 aiResponse kafkaAddress kmsg inTxt =
   let msgId  = show $ kmsg ^. #id
       chanId = show $ kmsg ^. #channelID
-      authId = show $ kmsg ^. #author % to (getID :: MessageAuthor -> Snowflake User)
+      authId = show $ kmsg ^. #author % to (getID :: MessageAuthor → Snowflake User)
       genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
   in liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
+
+-- possibly describe fallback strategy here
+openAiResponse ∷ ( BotC r
+  , HasID Channel Message
+  , MonadIO (P.Sem r)
+  ) ⇒ Message → T.Text → T.Text → P.Sem r ()
+openAiResponse kmsg inTxt modelId = do
+  out <- liftIO $ openai inTxt modelId
+  void $ reply kmsg out
 
 registerMessagesHandler ∷
   ( BotC r
@@ -50,12 +59,12 @@ registerMessagesHandler ∷
     , P.Reader Config
     ] r
   , MonadIO (P.Sem r)  -- Add MonadIO constraint
-  ) => P.Sem r () -- (Message, Maybe User, Maybe Member)
+  ) ⇒ P.Sem r () -- (Message, Maybe User, Maybe Member)
 registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) ->
   let kmentions   = kmsg ^. #mentions
       tContent    = kmsg ^. #content
-      kmentionIds = map (getID :: User -> Snowflake User) kmentions
-      authId      = kmsg ^. #author % to (getID :: MessageAuthor -> Snowflake User)
+      kmentionIds = map (getID :: User → Snowflake User) kmentions
+      authId      = kmsg ^. #author % to (getID :: MessageAuthor → Snowflake User)
   in when (authId /= ownUserId) $ do
     Just gld <- pure (kmsg ^. #guildID)
     when (ownGuildId == gld) $
@@ -66,18 +75,25 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) -
         in void $ reply kmsg finText
         >> invoke_ (DeleteMessage (kmsg ^. #channelID) kmsg)
     when (ownUserId `elem` kmentionIds) $ do
-      let tCC = T.replace "<@1096396952117198868>" "" tContent
+      let tCC = T.replace ownUserIdTxt "" tContent
+      isAKafkaMode <- liftIO $ readIORef aiKafka
       kafkaAddress <- P.asks @Config $ view #kafkaAddress
       if (ownGuildId == gld)
-        then aiResponse kafkaAddress kmsg tCC
+        then 
+          if isAKafkaMode
+            then aiResponse kafkaAddress kmsg tCC
+            else openAiResponse kmsg tCC "gpt-3.5-turbo-16k"
         else do
           isAiAllowedForAll <- liftIO $ readIORef aiForAll
           if isAiAllowedForAll
-            then aiResponse kafkaAddress kmsg tCC
+            then if isAKafkaMode 
+                  then aiResponse kafkaAddress kmsg tCC
+                  else openAiResponse kmsg tCC "gpt-3.5-turbo-16k"
             else do
               Just msgMem <- pure mbM
               let mRoles = msgMem ^. #roles
               if (modRoleId `VU.elem` mRoles)
-                then aiResponse kafkaAddress kmsg tCC
-                else do out <- liftIO $ openai tCC
-                        void $ reply kmsg out
+                then if isAKafkaMode
+                      then aiResponse kafkaAddress kmsg tCC
+                      else openAiResponse kmsg tCC "gpt-3.5-turbo-16k"
+                else openAiResponse kmsg tCC "llama-2-70b-chat"

@@ -1,5 +1,6 @@
 module Kalmarity.Bot.Commands.Permissions
   ( aiForAll
+  , aiKafka
   , registerPermissionsCommand
   ) where
 
@@ -30,13 +31,17 @@ aiForAll ∷ IORef Bool
 {-# NOINLINE aiForAll #-}
 aiForAll = unsafePerformIO $ newIORef False
 
+aiKafka ∷ IORef Bool
+{-# NOINLINE aiKafka #-}
+aiKafka = unsafePerformIO $ newIORef False
+
 registerPermissionsCommand ∷
   ( BotC r
   , P.Members
    '[ Persistable
     , P.Reader Config
     ] r
-  , MonadIO (P.Sem r)  -- Add MonadIO constraint
+  , MonadIO (P.Sem r)
   ) => P.Sem (DSLState FullContext r) ()
 registerPermissionsCommand = do 
   void
@@ -54,6 +59,20 @@ registerPermissionsCommand = do
                 & #description ?~ "only owner can allow"
 
   void
+    $ help (const "Switch AI responses to kafka mode.")
+    $ commandA @'[] "kafka" []
+    $ \ctx -> do
+      let authId = ctx ^. #user % to (getID :: User -> Snowflake User)
+      if (ownerUserId == authId)
+        then do liftIO $ atomicWriteIORef aiKafka True
+                tell_ @Embed ctx $ def
+                  & #title ?~ "Kafka mode"
+                  & #description ?~ "Kafka mode enabled"
+        else tell_ @Embed ctx $ def
+                & #title ?~ "Kafka mode"
+                & #description ?~ "only owner can change kafka mode"
+
+  void
     $ help (const "Limit AI to specific role only.")
     $ commandA @'[] "forbid" []
     $ \ctx -> do
@@ -66,6 +85,20 @@ registerPermissionsCommand = do
         else tell_ @Embed ctx $ def
                 & #title ?~ "Permissions"
                 & #description ?~ "only owner can forbid"
+
+  void
+    $ help (const "Switch AI responses to OpenAI mode.")
+    $ commandA @'[] "openai" []
+    $ \ctx -> do
+      let authId = ctx ^. #user % to (getID :: User -> Snowflake User)
+      if (ownerUserId == authId)
+        then do liftIO $ atomicWriteIORef aiKafka False
+                tell_ @Embed ctx $ def
+                  & #title ?~ "Kafka mode"
+                  & #description ?~ "Kafka mode disabled"
+        else tell_ @Embed ctx $ def
+                & #title ?~ "Kafka mode"
+                & #description ?~ "only owner can change kafka mode"
 
   void
     $ help (const "Check if AI mode is permissive for all.")
