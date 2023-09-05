@@ -31,13 +31,14 @@ instance ParseRecord (CLIOptions Wrapped)
 -- | The application configuration
 data Config
   = Config
-      { botToken         :: Text
-      , commandPrefix    :: Text
-      , connectionString :: Text
-      , kafkaAddress     :: Text
-      , eyesEmoji        :: RawEmoji
-      , pointAssignEmoji :: RawEmoji
-      , allowedGuilds    :: Maybe [Snowflake Guild]
+      { botToken            :: Text
+      , commandPrefix       :: Text
+      , connectionString    :: Text
+      , kafkaAddress        :: Text
+      , kafkaConnectOnStart :: Bool
+      , eyesEmoji           :: RawEmoji
+      , pointAssignEmoji    :: RawEmoji
+      , allowedGuilds       :: Maybe [Snowflake Guild]
       }
   deriving (Eq, Generic, Show)
   deriving anyclass (FromJSON, ToJSON)

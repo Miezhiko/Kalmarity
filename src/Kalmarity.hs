@@ -89,12 +89,13 @@ runBotWith cfg = Di.new $ \di ->
     (defaultIntents .+. intentGuildMembers .+. intentGuildPresences)
     (Just (StatusUpdateData Nothing [botActivity] Online False))
   ∘ handleFailByLogging $ do
-      messageIO <- bindSemToIO messageWithSnowflake
-      replyIO   <- bindSemToIO replyWithSnowflake 
-      void $ P.embed
-           $ forkIO
-           $ runKafkaConsumer (cfg ^. #kafkaAddress)
-                               messageIO replyIO
+      when (cfg ^. #kafkaConnectOnStart) $ do
+        messageIO <- bindSemToIO messageWithSnowflake
+        replyIO   <- bindSemToIO replyWithSnowflake 
+        void $ P.embed
+            $ forkIO
+            $ runKafkaConsumer (cfg ^. #kafkaAddress)
+                                messageIO replyIO
       db $ DB.runMigration migrateAll
       registerBotCommands
       registerEventHandlers
