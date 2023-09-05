@@ -43,7 +43,9 @@ openai req modelId =
      let client = makeOpenAIClient' chimeraBaseUrl apiKey manager 4
      result <- completeChat client (request req modelId)
      case result of
-       Left failure  -> pure $ T.pack (show failure)
+       Left failure  -> do
+        print failure
+        pure $ T.pack "can't answer, maybe some timeout"
        Right success ->
         let firstChoice = head $ chrChoices success
             finalMsg    = chchMessage firstChoice
