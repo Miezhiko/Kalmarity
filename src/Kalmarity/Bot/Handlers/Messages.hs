@@ -96,4 +96,5 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) -
                 then if isAKafkaMode
                       then aiResponse kafkaAddress kmsg tCC
                       else openAiResponse kmsg tCC "gpt-3.5-turbo-16k"
-                else openAiResponse kmsg tCC "llama-2-70b-chat"
+                else void $ reply kmsg (T.pack "Morning! Nice day for fishing ain't it! Hu ha!")
+                   --openAiResponse kmsg tCC "llama-2-70b-chat"
