@@ -37,4 +37,6 @@ registerOpenAICommand = void
       Just _gld <- pure (ctx ^. #guild)
       let inTxt  = T.unwords ltxt
       out <- liftIO $ openai inTxt "gpt-3.5-turbo-16k"
-      void $ reply ctx out
+      case out of
+        Left _  -> void $ reply ctx (T.pack "we're on timeout")
+        Right r -> void $ reply ctx r

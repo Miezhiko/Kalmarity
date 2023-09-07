@@ -43,13 +43,25 @@ aiResponse kafkaAddress kmsg inTxt =
       genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
   in liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
 
--- possibly describe fallback strategy here
+openAIWithFallback ∷ T.Text → IO T.Text
+openAIWithFallback inTxt = do
+  gpt35 <- openai inTxt "gpt-3.5-turbo-16k"
+  case gpt35 of
+    Left _ -> do
+      llama <- openai inTxt "llama-2-70b-chat"
+      case llama of
+        Left err -> do
+          print err
+          pure $ T.pack "Morning! Nice day for fishing ain't it! Hu ha!"
+        Right resp -> pure resp
+    Right resp -> pure resp
+
 openAiResponse ∷ ( BotC r
   , HasID Channel Message
   , MonadIO (P.Sem r)
-  ) ⇒ Message → T.Text → T.Text → P.Sem r ()
-openAiResponse kmsg inTxt modelId = do
-  out <- liftIO $ openai inTxt modelId
+  ) ⇒ Message → T.Text → P.Sem r ()
+openAiResponse kmsg inTxt = do
+  out <- liftIO $ openAIWithFallback inTxt
   void $ reply kmsg out
 
 registerMessagesHandler ∷
@@ -82,19 +94,18 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) -
         then 
           if isAKafkaMode
             then aiResponse kafkaAddress kmsg tCC
-            else openAiResponse kmsg tCC "gpt-3.5-turbo-16k"
+            else openAiResponse kmsg tCC
         else do
           isAiAllowedForAll <- liftIO $ readIORef aiForAll
-          if isAiAllowedForAll
+          if isAiAllowedForAll || ownerUserId == authId
             then if isAKafkaMode 
                   then aiResponse kafkaAddress kmsg tCC
-                  else openAiResponse kmsg tCC "gpt-3.5-turbo-16k"
+                  else openAiResponse kmsg tCC
             else do
               Just msgMem <- pure mbM
               let mRoles = msgMem ^. #roles
               if (modRoleId `VU.elem` mRoles)
                 then if isAKafkaMode
                       then aiResponse kafkaAddress kmsg tCC
-                      else openAiResponse kmsg tCC "gpt-3.5-turbo-16k"
+                      else openAiResponse kmsg tCC
                 else void $ reply kmsg (T.pack "Morning! Nice day for fishing ain't it! Hu ha!")
-                   --openAiResponse kmsg tCC "llama-2-70b-chat"

@@ -36,20 +36,18 @@ readFileStrict path = do
   length contents `seq` hClose handle
   pure $ trimNewLines contents
 
-openai ∷ T.Text → T.Text → IO T.Text
+openai ∷ T.Text → T.Text → IO (Either ClientError T.Text)
 openai req modelId =
   do manager <- newManager tlsManagerSettings
      apiKey  <- T.pack <$> readFileStrict "/etc/chat.rs/chimera.txt"
      let client = makeOpenAIClient' chimeraBaseUrl apiKey manager 4
      result <- completeChat client (request req modelId)
      case result of
-       Left failure  -> do
-        print failure
-        pure $ T.pack "can't answer, maybe some timeout"
+       Left failure  -> pure $ Left failure
        Right success ->
         let firstChoice = head $ chrChoices success
             finalMsg    = chchMessage firstChoice
             msgContent  = chmContent finalMsg
         in case msgContent of
-            Just content -> pure content
-            Nothing      -> pure $ T.pack "empty response"
+            Just content -> pure $ Right content
+            Nothing      -> pure $ Right (T.pack "empty response")
