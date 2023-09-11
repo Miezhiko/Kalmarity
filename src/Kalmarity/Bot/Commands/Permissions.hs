@@ -33,7 +33,7 @@ aiForAll = unsafePerformIO $ newIORef False
 
 aiKafka ∷ IORef Bool
 {-# NOINLINE aiKafka #-}
-aiKafka = unsafePerformIO $ newIORef False
+aiKafka = unsafePerformIO $ newIORef True
 
 registerPermissionsCommand ∷
   ( BotC r

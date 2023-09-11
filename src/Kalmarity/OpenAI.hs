@@ -23,6 +23,7 @@ request req modelId =
         , chmName         = Nothing }
     ]
 
+-- TODO: read backend address and token from config file
 chimeraBaseUrl ∷ BaseUrl
 chimeraBaseUrl = BaseUrl Https "chimeragpt.adventblocks.cc" 443 "/api"
 
