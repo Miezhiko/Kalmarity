@@ -9,7 +9,7 @@ bot.json
   "connectionString": "database.sqlite",
   "commandPrefix": "!",
   "kafkaAddress" : "localhost:9092",
-  "kafkaConnectOnStart": false,
+  "kafkaConnectOnStart": true,
   "eyesEmoji": {
     "name": "🦑"
   },
