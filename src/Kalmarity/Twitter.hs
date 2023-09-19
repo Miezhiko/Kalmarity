@@ -7,10 +7,10 @@ module Kalmarity.Twitter
   , replaceLinks
   ) where
 
-import           Data.Text           (Text)
-import qualified Data.Text           as T
+import           Data.Text        (Text)
+import qualified Data.Text        as T
 import           Text.Parsec
-import           Text.Parsec.Text    (Parser)
+import           Text.Parsec.Text (Parser)
 
 twitterLinkParser ∷ Parser Text
 twitterLinkParser = do

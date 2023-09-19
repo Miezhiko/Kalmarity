@@ -3,9 +3,9 @@ module Kalmarity.Bot.Commands
   ) where
 
 import           Kalmarity.Bot.Commands.Help
-import           Kalmarity.Bot.Commands.OpenAI
 import           Kalmarity.Bot.Commands.Homaridae
 import           Kalmarity.Bot.Commands.Leaderboard
+import           Kalmarity.Bot.Commands.OpenAI
 import           Kalmarity.Bot.Commands.Permissions
 import           Kalmarity.Bot.Commands.Pointfree
 import           Kalmarity.Bot.Commands.System

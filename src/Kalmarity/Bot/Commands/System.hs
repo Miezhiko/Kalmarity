@@ -33,5 +33,6 @@ registerSystemCommand = void
       let authId = ctx ^. #user % to (getID :: User -> Snowflake User)
       when (ownerUserId == authId) $
         liftIO $ do
+          _ <- system "sudo systemctl restart Salieri"
           _ <- system "sudo systemctl restart Amadeus"
           pure ()

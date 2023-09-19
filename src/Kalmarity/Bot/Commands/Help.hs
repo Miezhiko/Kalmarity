@@ -116,10 +116,12 @@ onlyOriginals = mapMaybe inner
   inner (a, Original) = Just a
 
 partitionVisibleC ∷ Bool -> [Command m c a] -> ([Command m c a], [Command m c a])
-partitionVisibleC isAdmin cmds = (\cs -> if isAdmin then cs else []) <$> partition notHiddenC cmds
+partitionVisibleC isAdmin cmds =
+  (\cs -> if isAdmin then cs else []) <$> partition notHiddenC cmds
 
 partitionVisibleG ∷ Bool -> [Group m c a] -> ([Group m c a], [Group m c a])
-partitionVisibleG isAdmin grps = (\gs -> if isAdmin then gs else []) <$> partition notHiddenG grps
+partitionVisibleG isAdmin grps =
+  (\gs -> if isAdmin then gs else []) <$> partition notHiddenG grps
 
 helpForGroup ∷ CommandContext m c a => Bool -> c -> Group m c a -> T.Text
 helpForGroup isAdmin ctx grp =
@@ -131,8 +133,8 @@ helpForGroup isAdmin ctx grp =
     <> commandsMsg
     <> aboutHelp ctx
  where
-  groups = filter (\g -> isAdmin || notHiddenG g) ∘ onlyOriginals ∘ LH.elems $ grp ^. #children
-  commands = filter (\c -> isAdmin || notHiddenC c)  ∘ onlyOriginals ∘ LH.elems $ grp ^. #commands
+  groups    = filter (\g -> isAdmin || notHiddenG g) ∘ onlyOriginals ∘ LH.elems $ grp ^. #children
+  commands  = filter (\c -> isAdmin || notHiddenC c) ∘ onlyOriginals ∘ LH.elems $ grp ^. #commands
 
   groupsFmt = map formatWithAliases (groups ^.. traversed % #names)
   groupsMsg =
@@ -157,8 +159,8 @@ helpForGroup isAdmin ctx grp =
 rootHelp ∷ CommandContext m c a => Bool -> c -> CommandHandler m c a -> T.Text
 rootHelp isAdmin ctx handler = "Commands:\n" <> groupsMsg <> commandsMsg <> adminHelp <> aboutHelp ctx
  where
-  groups = partitionVisibleG isAdmin ∘ onlyOriginals ∘ LH.elems $ handler ^. #groups
-  commands = partitionVisibleC isAdmin ∘ onlyOriginals ∘ LH.elems $ handler ^. #commands
+  groups    = partitionVisibleG isAdmin ∘ onlyOriginals ∘ LH.elems $ handler ^. #groups
+  commands  = partitionVisibleC isAdmin ∘ onlyOriginals ∘ LH.elems $ handler ^. #commands
   groupsFmt = mapBoth (map (fmtGroupWithDescription ctx)) groups
   (groupsMsg, hGroupsMsg) = mapBoth (T.unlines ∘ map ("- " <>)) groupsFmt
   (commandsMsg, hcommandsMsg) = mapBoth (T.unlines ∘ map (("- " <>) ∘ fmtCommandWithDescription ctx)) commands
@@ -178,8 +180,12 @@ renderHelp isAdmin handler ctx path =
       let failedMsg =
             if null remainingPath
               then ""
-              else "No command or group with the path: `" <> T.unwords remainingPath <> "` exists for the group: `" <> NE.head names <> "`\n"
-       in failedMsg <> "Help for command group `" <> NE.head names <> "`: \n" <> helpForGroup isAdmin ctx grp
+              else "No command or group with the path: `" <> T.unwords remainingPath
+                                                          <> "` exists for the group: `"
+                                                          <> NE.head names <> "`\n"
+       in failedMsg <> "Help for command group `"
+                    <> NE.head names <> "`: \n"
+                    <> helpForGroup isAdmin ctx grp
     Nothing ->
       let failedMsg =
             if null path

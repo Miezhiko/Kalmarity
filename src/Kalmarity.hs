@@ -49,7 +49,7 @@ filterLogText Df1.Debug t = not $ "Not handling event:" `isInfixOf` (LT.unpack (
 filterLogText _ _         = True
 
 filterDi ∷ Di.Core.Di Di.Level Di.Path Di.Message
-         -> Di.Core.Di Di.Level Di.Path Di.Message
+        -> Di.Core.Di Di.Level Di.Path Di.Message
 filterDi = Di.Core.filter
   (\l p lmsg -> (Df1.Push "calamity") `notElem` p
               && filterLogText l lmsg)
@@ -104,7 +104,7 @@ runBotWith cfg = Di.new $ \di ->
 -- from a `bot.json` file.
 main ∷ IO ()
 main = do
-  opts <- unwrapRecord @_ @CLIOptions "Kalmarity bot..."
+  opts <- unwrapRecord @_ @CLIOptions "Kalmarity..."
   path <- case opts ^. #config of
     Just path -> pure path
     Nothing -> do
@@ -113,10 +113,10 @@ main = do
           die "error: cannot find configuration file"
   cfg <-
     if "yaml" `isSuffixOf` path
-    then Yaml.decodeFileThrow path
-    else if "json" `isSuffixOf` path
-    then Aeson.eitherDecodeFileStrict path >>= either die pure
-    else die "error: unrecoognized file extension (must be either json or yaml)"
+      then Yaml.decodeFileThrow path
+      else if "json" `isSuffixOf` path
+            then Aeson.eitherDecodeFileStrict path >>= either die pure
+            else die "error: unrecoognized file extension (must be either json or yaml)"
   runBotWith cfg
 
  where ifM mb x y = do

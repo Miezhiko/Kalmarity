@@ -3,7 +3,9 @@
   #-}
 
 module Kalmarity.Homaridae.Processor
-  ( processKafkaMessages
+  ( MsgIO
+  , RepIO
+  , processKafkaMessages
   ) where
 
 import           Calamity
@@ -19,14 +21,17 @@ import           Data.Text.Encoding
 
 import           Kafka.Consumer
 
+type MsgIO = (Snowflake Channel, T.Text) -> IO (Maybe ())
+type RepIO = (Snowflake Message, T.Text) -> IO (Maybe ())
+
 splitText ∷ T.Text -> [T.Text]
 splitText ""  = []
 splitText str = T.take 1980 str : splitText (T.drop 1980 str)
 
 processSingleMessages ∷ T.Text
                      -> [T.Text]
-                     -> ((Snowflake Channel, T.Text) -> IO (Maybe ()))
-                     -> ((Snowflake Message, T.Text) -> IO (Maybe ()))
+                     -> MsgIO
+                     -> RepIO
                      -> IO ()
 processSingleMessages _ [] _ _                    = pure ()
 processSingleMessages myKey [myVal] msgIO replyIO = do
@@ -45,14 +50,14 @@ processSingleMessages myKey (x:xs) msgIO replyIO =
 
 processSingleMessage ∷ T.Text
                     -> T.Text
-                    -> ((Snowflake Channel, T.Text) -> IO (Maybe ()))
-                    -> ((Snowflake Message, T.Text) -> IO (Maybe ()))
+                    -> MsgIO
+                    -> RepIO
                     -> IO ()
 processSingleMessage = (∘ splitText) ∘ processSingleMessages
 
 processKafkaMessages ∷ KafkaConsumer
-                    -> ((Snowflake Channel, T.Text) -> IO (Maybe ()))
-                    -> ((Snowflake Message, T.Text) -> IO (Maybe ()))
+                    -> MsgIO
+                    -> RepIO
                     -> IO ()
 processKafkaMessages kafkaConsumer msgIO replyIO = do
   result <- pollMessage kafkaConsumer (Timeout 500)

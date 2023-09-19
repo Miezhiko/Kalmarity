@@ -8,8 +8,6 @@ module Kalmarity.Homaridae.Consumer
   , runKafkaConsumer
   ) where
 
-import           Calamity
-
 import           Kalmarity.Homaridae.Kafka
 import           Kalmarity.Homaridae.Processor
 
@@ -35,8 +33,8 @@ consumerSub = topics [consumerTopic]
 
 -- run two workers
 runConsumerSubscription ∷ KafkaConsumer
-                       -> ((Snowflake Channel, Text) -> IO (Maybe ()))
-                       -> ((Snowflake Message, Text) -> IO (Maybe ()))
+                       -> MsgIO
+                       -> RepIO
                        -> IO (Either KafkaError ())
 runConsumerSubscription kafkaConsumer msgIO replyIO = do
   workerTask1 <- async $
@@ -57,8 +55,8 @@ runConsumerSubscription kafkaConsumer msgIO replyIO = do
   pure $ Right ()
 
 runKafkaConsumer ∷ Text
-                -> ((Snowflake Channel, Text) -> IO (Maybe ()))
-                -> ((Snowflake Message, Text) -> IO (Maybe ()))
+                -> MsgIO
+                -> RepIO
                 -> IO ()
 runKafkaConsumer kafkaAddress msgIO replyIO = do
   res <- bracket mkConsumer clConsumer runHandler

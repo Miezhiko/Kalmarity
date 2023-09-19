@@ -12,18 +12,18 @@ import           Kalmarity.Bot.Handlers.Points
 import           Kalmarity.Bot.Utils
 
 import           Calamity
-import           Calamity.Commands                     as C
-import           Calamity.Commands.Context             (FullContext)
+import           Calamity.Commands                  as C
+import           Calamity.Commands.Context          (FullContext)
 
 import           Control.Monad
 
 import           Optics
 
-import qualified Polysemy                              as P
-import qualified Polysemy.AtomicState      as P
-import qualified Polysemy.Fail                         as P
-import qualified Polysemy.Reader                       as P
-import qualified Polysemy.Time                         as P
+import qualified Polysemy                           as P
+import qualified Polysemy.AtomicState               as P
+import qualified Polysemy.Fail                      as P
+import qualified Polysemy.Reader                    as P
+import qualified Polysemy.Time                      as P
 
 import           TextShow
 
