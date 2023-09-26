@@ -1,5 +1,5 @@
 name: Kalmarity
-version: 0.3.6.1
+version: 0.3.7
 license: AGPL-3
 
 build-type: Simple
@@ -10,6 +10,7 @@ Executable kalmarity
   Main-Is: Kalmarity.hs
   Other-Modules:
     Kalmarity.Common,
+    Kalmarity.Morning,
     Kalmarity.Twitter,
     Kalmarity.OpenAI,
     Kalmarity.Homaridae,
@@ -100,6 +101,7 @@ Executable kalmarity
     , http-client-tls       >= 0.3.6.3
     , openai-hs             >= 0.3.0.1
     , servant-client        >= 0.20
+    , random                >= 1.2.1.1
     , bytestring
     , time
     , process

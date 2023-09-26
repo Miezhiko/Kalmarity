@@ -1,5 +1,6 @@
 module Kalmarity.Bot.Handlers.Messages where
 
+import           Kalmarity.Morning
 import           Kalmarity.Homaridae
 import           Kalmarity.OpenAI
 import           Kalmarity.Twitter
@@ -108,4 +109,5 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) -
                 then if isAKafkaMode
                       then aiResponse kafkaAddress kmsg tCC
                       else openAiResponse kmsg tCC
-                else void $ reply kmsg (T.pack "Morning! Nice day for fishing ain't it! Hu ha!")
+                else do fishing <- liftIO $ isItANiceDayForFishing
+                        void $ reply kmsg (T.pack fishing)
