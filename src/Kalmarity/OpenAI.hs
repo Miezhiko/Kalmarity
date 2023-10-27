@@ -4,8 +4,6 @@ module Kalmarity.OpenAI
 
 import           OpenAI.Client
 
-import           Servant.Client
-
 import qualified Data.Text               as T
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
@@ -23,10 +21,6 @@ request req modelId =
         , chmName         = Nothing }
     ]
 
--- TODO: read backend address and token from config file
-chimeraBaseUrl ∷ BaseUrl
-chimeraBaseUrl = BaseUrl Https "chimeragpt.adventblocks.cc" 443 "/api"
-
 trimNewLines ∷ String → String
 trimNewLines = filter (/= '\n')
 
@@ -40,8 +34,8 @@ readFileStrict path = do
 openai ∷ T.Text → T.Text → IO (Either ClientError T.Text)
 openai req modelId =
   do manager <- newManager tlsManagerSettings
-     apiKey  <- T.pack <$> readFileStrict "/etc/chat.rs/chimera.txt"
-     let client = makeOpenAIClient' chimeraBaseUrl apiKey manager 4
+     apiKey  <- T.pack <$> readFileStrict "/etc/chat.rs/openai.txt"
+     let client = makeOpenAIClient apiKey manager 4
      result <- completeChat client (request req modelId)
      case result of
        Left failure  -> pure $ Left failure
