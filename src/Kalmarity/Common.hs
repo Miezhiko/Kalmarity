@@ -1,3 +1,7 @@
+{-# LANGUAGE
+    Safe
+  #-}
+
 module Kalmarity.Common
   ( module Exported
   , (.:)
