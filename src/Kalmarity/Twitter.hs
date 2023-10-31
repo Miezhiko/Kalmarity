@@ -19,8 +19,7 @@ twitterLinkParser = do
   protocol <- try (string "https://")     <|> string "http://"
   domain   <- try (string "twitter.com/") <|> string "x.com/"
   username <- many1 (alphaNum <|> char '_')
-  _        <- char '/'
-  _        <- string "status/"
+  _        <- string "/status/"
   tweetID  <- many1 digit
   let urlPrefix = protocol ++ domain
   pure $ T.pack $ urlPrefix ++ username ++ "/status/" ++ tweetID
