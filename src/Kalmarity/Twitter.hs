@@ -27,7 +27,7 @@ twitterLinkParser = do
 
 containsTwitterLink ∷ Text -> Bool
 containsTwitterLink msg =
-  case parse (many (choice [try twitterLinkParser, anyChar >> return T.empty])) "" msg of
+  case parse (many (choice [try twitterLinkParser, anyChar >> pure T.empty])) "" msg of
     Left _      -> False
     Right links -> any (not . T.null) links
 
