@@ -1,5 +1,6 @@
 module Kalmarity.OpenAI
-  ( openai
+  ( openAIWithFallback
+  , openai
   ) where
 
 import           OpenAI.Client
@@ -46,3 +47,16 @@ openai req modelId =
         in case msgContent of
             Just content -> pure $ Right content
             Nothing      -> pure $ Right (T.pack "empty response")
+
+openAIWithFallback ∷ T.Text → IO T.Text
+openAIWithFallback inTxt = do
+  gpt35 <- openai inTxt "gpt-3.5-turbo-16k"
+  case gpt35 of
+    Left _ -> do
+      llama <- openai inTxt "llama-2-70b-chat"
+      case llama of
+        Left err -> do
+          print err
+          pure $ T.pack "Morning! Nice day for fishing ain't it! Hu ha!"
+        Right resp -> pure resp
+    Right resp -> pure resp

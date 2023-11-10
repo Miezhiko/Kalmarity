@@ -1,7 +1,7 @@
 module Kalmarity.Bot.Handlers.Messages where
 
-import           Kalmarity.Morning
 import           Kalmarity.Homaridae
+import           Kalmarity.Morning
 import           Kalmarity.OpenAI
 import           Kalmarity.Twitter
 
@@ -43,19 +43,6 @@ aiResponse kafkaAddress kmsg inTxt =
       authId = show $ kmsg ^. #author % to (getID :: MessageAuthor → Snowflake User)
       genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
   in liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
-
-openAIWithFallback ∷ T.Text → IO T.Text
-openAIWithFallback inTxt = do
-  gpt35 <- openai inTxt "gpt-3.5-turbo-16k"
-  case gpt35 of
-    Left _ -> do
-      llama <- openai inTxt "llama-2-70b-chat"
-      case llama of
-        Left err -> do
-          print err
-          pure $ T.pack "Morning! Nice day for fishing ain't it! Hu ha!"
-        Right resp -> pure resp
-    Right resp -> pure resp
 
 openAiResponse ∷ ( BotC r
   , HasID Channel Message
