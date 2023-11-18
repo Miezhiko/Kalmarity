@@ -100,6 +100,23 @@ runBotWith cfg = Di.new $ \di ->
       registerBotCommands
       registerEventHandlers
 
+configDefaultPaths ∷ [FilePath]
+configDefaultPaths =
+  [ "bot.json"
+  , "bot.yaml"
+  , "bot.yml"
+  , "/etc/bot.json"
+  , "/etc/bot.yaml"
+  , "/etc/bot.yml" ]
+
+findConfig ∷ [FilePath] -> IO (Maybe FilePath)
+findConfig []     = pure Nothing
+findConfig (x:xs) = do
+  exists <- doesFileExist x
+  case exists of
+    True  -> pure $ Just x
+    False -> findConfig xs
+
 -- | Run the bot in the `IO` monad, reading the configuration
 -- from a `bot.json` file.
 main ∷ IO ()
@@ -108,20 +125,17 @@ main = do
   path <- case opts ^. #config of
     Just path -> pure path
     Nothing -> do
-      ifM (doesFileExist "bot.json") ("bot.json" <$ putStrLn "using bot.json...") $
-        ifM (doesFileExist "bot.yaml") ("bot.yaml" <$ putStrLn "using bot.yaml...") $
-          die "error: cannot find configuration file"
+      mbp <- findConfig configDefaultPaths
+      case mbp of
+        Just pa -> pure pa
+        Nothing -> die "error: cannot find configuration file"
   cfg <-
-    if "yaml" `isSuffixOf` path
+    if "yaml" `isSuffixOf` path || "yml" `isSuffixOf` path
       then Yaml.decodeFileThrow path
       else if "json" `isSuffixOf` path
             then Aeson.eitherDecodeFileStrict path >>= either die pure
             else die "error: unrecoognized file extension (must be either json or yaml)"
   runBotWith cfg
-
- where ifM mb x y = do
-        b <- mb
-        if b then x else y
 
 botActivity ∷ Activity
 botActivity = Activity.activity "Squids?" Game
