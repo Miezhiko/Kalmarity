@@ -6,7 +6,7 @@ After=multi-user.target
 [Service]
 Type=simple
 User=mawa
-WorkingDirectory=/data/contrib/haskell/Kalmarity
+WorkingDirectory=/data2/contrib/haskell/Kalmarity
 ExecStart=/usr/bin/hake run
 ExecStop=killall Kalmarity
 

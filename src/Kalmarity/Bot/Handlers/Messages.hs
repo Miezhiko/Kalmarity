@@ -2,7 +2,6 @@ module Kalmarity.Bot.Handlers.Messages where
 
 import           Kalmarity.Homaridae
 import           Kalmarity.Morning
-import           Kalmarity.OpenAI
 import           Kalmarity.Twitter
 
 import           Kalmarity.Bot.Commands.Permissions
@@ -25,9 +24,6 @@ import qualified Polysemy                           as P
 import qualified Polysemy.Fail                      as P
 import qualified Polysemy.Reader                    as P
 
---containsRussian ∷ [Char] -> Bool
---containsRussian = any (\x -> 1040 <= ord x && ord x <=1103) ∘ filter isLetter
-
 aiResponse ∷ (Is k1 A_Getter, Is k2 A_Getter, Is k3 A_Getter,
               Is k4 A_Getter, Show a1, Show a2, JoinKinds k5 A_Getter k3,
               LabelOptic "id" k1 s s a1 a1,
@@ -43,14 +39,6 @@ aiResponse kafkaAddress kmsg inTxt =
       authId = show $ kmsg ^. #author % to (getID :: MessageAuthor → Snowflake User)
       genKey = chanId ++ "|" ++ authId ++ "|" ++ msgId
   in liftIO $ produceKafkaMessage kafkaAddress genKey inTxt
-
-openAiResponse ∷ ( BotC r
-  , HasID Channel Message
-  , MonadIO (P.Sem r)
-  ) ⇒ Message → T.Text → P.Sem r ()
-openAiResponse kmsg inTxt = do
-  out <- liftIO $ openAIWithFallback inTxt
-  void $ reply kmsg out
 
 registerMessagesHandler ∷
   ( BotC r
@@ -76,25 +64,17 @@ registerMessagesHandler = void $ react @'MessageCreateEvt $ \(kmsg, _mbU, mbM) -
         >> invoke_ (DeleteMessage (kmsg ^. #channelID) kmsg)
     when (ownUserId `elem` kmentionIds) $ do
       let tCC = T.replace ownUserIdTxt "" tContent
-      isAKafkaMode <- liftIO $ readIORef aiKafka
       kafkaAddress <- P.asks @Config $ view #kafkaAddress
       if (ownGuildId == gld)
-        then 
-          if isAKafkaMode
-            then aiResponse kafkaAddress kmsg tCC
-            else openAiResponse kmsg tCC
+        then aiResponse kafkaAddress kmsg tCC
         else do
           isAiAllowedForAll <- liftIO $ readIORef aiForAll
           if isAiAllowedForAll || ownerUserId == authId
-            then if isAKafkaMode 
-                  then aiResponse kafkaAddress kmsg tCC
-                  else openAiResponse kmsg tCC
+            then aiResponse kafkaAddress kmsg tCC
             else do
               Just msgMem <- pure mbM
               let mRoles = msgMem ^. #roles
               if (modRoleId `VU.elem` mRoles)
-                then if isAKafkaMode
-                      then aiResponse kafkaAddress kmsg tCC
-                      else openAiResponse kmsg tCC
+                then aiResponse kafkaAddress kmsg tCC
                 else do fishing <- liftIO $ isItANiceDayForFishing
                         void $ reply kmsg (T.pack fishing)
