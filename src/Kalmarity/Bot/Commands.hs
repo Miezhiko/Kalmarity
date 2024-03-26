@@ -5,7 +5,8 @@ module Kalmarity.Bot.Commands
 import           Kalmarity.Bot.Commands.Help
 import           Kalmarity.Bot.Commands.Homaridae
 import           Kalmarity.Bot.Commands.Leaderboard
-import           Kalmarity.Bot.Commands.OpenAI
+-- openai support is dropped for now (for better times)
+-- import           Kalmarity.Bot.Commands.OpenAI
 import           Kalmarity.Bot.Commands.Permissions
 import           Kalmarity.Bot.Commands.Pointfree
 import           Kalmarity.Bot.Commands.System
@@ -42,7 +43,7 @@ registerBotCommands = void $ addCommands $ do
   void customHelpCommand
   void $ requires [admin] adminHelpCommand
 
-  registerOpenAICommand
+  -- registerOpenAICommand
   registerHomaridaeCommand
   registerLeaderboardCommand
   registerPointfreeCommand
